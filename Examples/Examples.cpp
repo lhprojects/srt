@@ -1165,42 +1165,34 @@ void blueSky(int q)
 		pars::origin = Vec3{ 0,0,-5 },
 		pars::radius = 5,
 		pars::out2InRefractRatio = 0.0,
-		pars::outerReflectRatio = 0.5,
+		pars::outerReflectRatio = 1.0,
 		pars::outerReflectType = ReflectType::Diffuse);
 
-    auto atmosphereTop = quadricSurface(
-        pars::name = "atmoTop",
-        pars::shape = ShapeType::Shpere,
-        pars::origin = Vec3{ 0,0,-5 },
-		pars::radius = 5 + atmosphereThick,
-        pars::in2OutRefractRatio = 1,
-        pars::out2InRefractRatio = 1,
-        pars::innerReflectRatio = 0,
-        pars::outerReflectRatio = 0,
-        pars::innerReflectType = ReflectType::Mirror,
-        pars::outerReflectType = ReflectType::Mirror);
 
 
     struct Atmosphere : Device
     {
 
-        Real step = 0.1;
+        Real step = 0.2;
         Real Length = 0.5;
-        std::shared_ptr<Bound> bound;
+        std::shared_ptr<Surface> atmosphereTop;
         SurfaceProperties scattering_property;
         SurfaceProperties trans_property;
 
         Atmosphere()
         {
             setName("air");
-            bound = all({ inverse(quadricBound(
+            atmosphereTop = quadricSurface(
+                pars::name = "atmoTop",
                 pars::shape = ShapeType::Shpere,
-                pars::radius=5-1E-3,
-                pars::origin = Vec3{0,0,-5})),
-                quadricBound(
-                pars::shape = ShapeType::Shpere,
-                pars::radius = 5 + atmosphereThick + 1E-3,
-                pars::origin = Vec3{0,0,-5}) });
+                pars::origin = Vec3{ 0,0,-5 },
+                pars::radius = 5 + atmosphereThick,
+                pars::in2OutRefractRatio = 1,
+                pars::out2InRefractRatio = 1,
+                pars::innerReflectRatio = 0,
+                pars::outerReflectRatio = 0,
+                pars::innerReflectType = ReflectType::Mirror,
+                pars::outerReflectType = ReflectType::Mirror);
 
             scattering_property.fIn2OutReflect = 0.5;
             scattering_property.fIn2OutTrans = 0.5;
@@ -1213,19 +1205,25 @@ void blueSky(int q)
         void process(Ray const& in, ProcessHandler& handler) const {
 
                 if (handler.fType == HandlerType::Distance) {
-                    if (inBound(bound.get(), in.fO)) {
+                    if (atmosphereTop->isInner(in.fO)) {
                         static_cast<DistanceHandler&>(handler).distance(step, true);
+                    } else {
+                        atmosphereTop->process(in, handler);
                     }
                 } else if (handler.fType == HandlerType::Tracing) {
-                    Real len = Length / Sqr(Sqr(500 / in.fLambda));
-                    if (uniform(0, 1) < step / len) {
-                        static_cast<TracingHandler&>(handler).hitSurface(
-                            in.fO + in.fD * step, in.fD,
-                            true, &scattering_property, this);
+                    if (atmosphereTop->isInner(in.fO)) {
+                        Real len = Length / Sqr(Sqr(500 / in.fLambda));
+                        if (uniform(0, 1) < step / len) {
+                            static_cast<TracingHandler&>(handler).hitSurface(
+                                in.fO + in.fD * step, in.fD,
+                                true, &scattering_property, this);
+                        } else {
+                            static_cast<TracingHandler&>(handler).hitSurface(
+                                in.fO + in.fD * step, in.fD,
+                                true, &trans_property, this);
+                        }
                     } else {
-                        static_cast<TracingHandler&>(handler).hitSurface(
-                            in.fO + in.fD * step, in.fD,
-                            true, &trans_property, this);
+                        atmosphereTop->process(in, handler);
                     }
                 }                       
         }
@@ -1241,12 +1239,11 @@ void blueSky(int q)
 		pars::brightness = 1);
 
     en.addDevice(earth);
-    en.addDevice(atmosphereTop);
     en.addDevice(std::make_shared<Atmosphere>());
     en.addDevice(sun);
     //en.addRecorder(logger());
 
-	for (Real l = 0.5; l <= 4; l *= 2) {
+	for (Real l = 0.5; l <= 2; l *= 4) {
         static_cast<Atmosphere*>(en.findDevice("air"))->Length = l;
         {
             sun->set(
@@ -1310,7 +1307,7 @@ void blueSky(int q)
                         pars::mult = false
                     ));
 
-            } else {
+            } else if(q == kGOOD) {
                 bmp = en.eye(
                     PictureOpts(
                         pars::width = 200,
@@ -1323,7 +1320,20 @@ void blueSky(int q)
                         pars::mult = true,
                         pars::stdoutProgress=false
                     ));
-            }
+            } else {
+				bmp = en.eye(
+					PictureOpts(
+						pars::width = 200,
+						pars::high = 200,
+						pars::samplePerPixel = 10*5000,
+						pars::origin = Vec3{ 0,0,0.05 },
+						pars::n1 = Vec3{ 0,1,0 },
+						pars::n2 = Vec3{ 1,0,0 },
+						pars::fieldOfView = 2,
+						pars::mult = true,
+						pars::stdoutProgress = true
+					));
+        }
             bmp.cnormalize();
             bmp.cclip(0.05); // make the sky more bright
             bmp.cnormalize();
@@ -1371,7 +1381,7 @@ void real_main()
     run(testBoxSurface(kGOOD));
     run(testParabola());
     run(testLookAt());
-    run(blueSky(kFAST));
+    run(blueSky(kGOOD));
     run(testUniform());
     run(testPlankLaw());
     run(testT2Color());
@@ -1390,6 +1400,7 @@ void real_main()
 
 
 int main() {
+    run(blueSky(kBEST));
     real_main();
     return 0;
 }

@@ -136,6 +136,22 @@ namespace srt {
 	};
 
 	std::shared_ptr<ShiftSurface> shift(std::shared_ptr<Surface> sur, Vec3 const& s);
+
+	inline std::shared_ptr<ShiftSurface> inverse(std::shared_ptr<QuadricSurface> sur)
+	{
+		auto newsur = std::make_shared<QuadricSurface>(*sur);
+		newsur->fP = -sur->fP;
+		newsur->fR = -sur->fR;
+		newsur->fQ = -sur->fQ;
+	}
+	
+	inline std::shared_ptr<PlaneSurface> inverse(std::shared_ptr<PlaneSurface> sur)
+	{
+		auto newsur = std::make_shared<PlaneSurface>(*sur);
+		newsur->fP = -sur->fP;
+		newsur->fR = -sur->fR;
+	}
+
 }
 
 #endif

@@ -10,6 +10,8 @@ namespace srt {
 	struct SymMatrix3X3 {
 
 		SymMatrix3X3();
+		SymMatrix3X3(Real m1, Real m12, Real m13,
+			Real m22, Real m23, Real m33);
 
 		Real fM11{};
 		Real fM12{};
@@ -18,9 +20,23 @@ namespace srt {
 		Real fM23{};
 		Real fM33{};
 
+		SymMatrix3X3 operator-() const {
+			return SymMatrix3X3{ -fM11, -fM12, -fM13,
+			-fM22, -fM23, -fM33 };
+		}
+
 	};
 
 	inline SymMatrix3X3::SymMatrix3X3() {}
+	inline SymMatrix3X3::SymMatrix3X3(Real m11, Real m12, Real m13,
+		Real m22, Real m23, Real m33) {
+		fM11 = m11;
+		fM12 = m12;
+		fM13 = m13;
+		fM22 = m22;
+		fM23 = m23;
+		fM33 = m33;
+	}
 
 	inline Vec3 dot(SymMatrix3X3 const& q, Vec3 const& v)
 	{
