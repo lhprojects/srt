@@ -20,6 +20,12 @@ Simple Ray Tracing For Study
 ## telescope
 ![](WinBuild/Examples/output/telescope_picture.png)
 
+## sky and sunfail
+![](WinBuild/results/output/sunblue_l0.500000.png)
+![](WinBuild/results/output/sunblue_l2.000000.png)
+![](WinBuild/results/output/sunblue_l0.500000.png)
+![](WinBuild/results/output/sunblue_l2.000000.png)
+
 ## raytracing for ray
 ![](WinBuild/Examples/output/tube_picture.png)
 
