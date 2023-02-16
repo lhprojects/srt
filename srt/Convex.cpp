@@ -5,7 +5,7 @@ namespace srt {
 
 	void Convex::addSurface(std::shared_ptr<Surface> surf)
 	{
-		fSurfaces.push_back(surf);
+		fSurfaces.push_back(std::move(surf));
 	}
 
 	bool Convex::isInner(Vec3 const& p) const
