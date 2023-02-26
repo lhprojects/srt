@@ -115,8 +115,9 @@ namespace srt {
 				ShapeType type =
 					pars::get(pars::shape, args...);
 				if (type == ShapeType::Parabola) {
-					if constexpr (a && b && c) {
-						setParabola(pars::get(pars::origin, args...),
+					if constexpr (b && c) {
+						Vec3 origin = pars::get_default(pars::origin, Vec3{ 0,0,0 }, args...);
+						setParabola(origin,
 							pars::get(pars::direction, args...),
 							pars::get(pars::radius, args...));
 					}
@@ -125,8 +126,9 @@ namespace srt {
 					}
 				}
 				else if (type == ShapeType::Tube) {
-					if constexpr (a && b && c) {
-						setTube(pars::get(pars::origin, args...),
+					if constexpr (b && c) {
+						Vec3 origin = pars::get_default(pars::origin, Vec3{ 0,0,0 }, args...);
+						setTube(origin,
 							pars::get(pars::direction, args...),
 							pars::get(pars::radius, args...));
 					}
@@ -135,8 +137,9 @@ namespace srt {
 					}
 				}
 				else if (type == ShapeType::Shpere) {
-					if constexpr (a && c) {
-						setSphere(pars::get(pars::origin, args...),
+					if constexpr (c) {
+						Vec3 origin = pars::get_default(pars::origin, Vec3{ 0,0,0 }, args...);
+						setSphere(origin,
 							pars::get(pars::radius, args...));
 					}
 					else {
@@ -149,8 +152,7 @@ namespace srt {
 					if constexpr (b && c && d && e) {
 						Vec3 origin = pars::get_default(pars::origin, Vec3{ 0,0,0 }, args...);
 						Vec3 direction = pars::get(pars::direction, args...);
-						setCone(origin,
-							direction,
+						setCone(origin, direction,
 							pars::get(pars::radius, args...),
 							pars::get(pars::top_height, args...),
 							pars::get(pars::top_radius, args...)

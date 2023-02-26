@@ -1397,6 +1397,14 @@ void do_run(void (f)(), char const* s)
     printf("%10fs\n", d);
 }
 
+
+void testFormat(int) {
+    using namespace srt;
+
+    std::cout << std::format("{}", *quadricSurface(pars::shape = ShapeType::Shpere,
+        pars::radius = 1.));
+
+}
 #define run(f) do_run([](){ f; }, #f)
 void real_main()
 {
@@ -1424,11 +1432,15 @@ void real_main()
     run(testPlaneStop());
     run(testWaveLengthToColor());
     run(blueSky(kBEST));
+    run(testFormat(kBEST));
 
 }
 
 
+#include <chrono>
 int main() {
+    
+
     real_main();
     return 0;
 }

@@ -13,46 +13,86 @@
 namespace srt {
 
 
-	struct QuadricSurface : Surface, Quadric
-	{
+	struct QuadricSurface : Surface, Quadric {
 
 		static constexpr auto pars_ = Surface::pars_ | Quadric::pars_;
 
-		QuadricSurface(pars::argument auto const &... args)
-		{
+		QuadricSurface(pars::argument auto const &... args) {
 			set(args...);
 		}
 
-		QuadricSurface(pars::uncheck_t, pars::argument auto const &... args)
-		{
+		QuadricSurface(pars::uncheck_t, pars::argument auto const &... args) {
 			set(pars::uncheck, args...);
 		}
 
-		void set(pars::argument auto const &... args)
-		{
+		void set(pars::argument auto const &... args) {
 			pars::check(pars_, args...);
 			set(pars::uncheck, args...);
 		}
 
-		void set(pars::uncheck_t, pars::argument auto const &... args)
-		{
+		void set(pars::uncheck_t, pars::argument auto const &... args) {
 			Surface::set(pars::uncheck, args...);
 			Quadric::set(pars::uncheck, args...);
 		}
 
-		bool isInner(Vec3 const& p) const override
-		{
+		bool isInner(Vec3 const& p) const override {
 			return inner(p);
 		}
 
 		void process(Ray const& in, ProcessHandler& handler) const override;
 	};
 
-	std::shared_ptr<QuadricSurface> quadricSurface(pars::argument auto const &... args)
-	{
+	std::shared_ptr<QuadricSurface> quadricSurface(pars::argument auto const &... args) {
 		pars::check(QuadricSurface::pars_, args...);
 		return std::make_shared<QuadricSurface>(args...);
 	}
+
+	inline std::string to_string(SymMatrix3X3 const& q) {
+		return std::format("[{:9} {:9} {:9}, {:9} {:9} {:9}, {:9} {:9} {:9}]", q.fM11, q.fM12, q.fM13,
+			q.fM12, q.fM22, q.fM23,
+			q.fM13, q.fM23, q.fM33);
+	}
+
+	inline std::string to_string(Vec3 const& q) {
+		return std::format("[{:9} {:9} {:9}]", q.fX, q.fY, q.fZ);
+	}
+
+	inline std::string to_string(QuadricSurface const& q) {
+		return std::format("Q = {};\nP = {};\nR = {}\n", q.fQ, q.fP, q.fR);
+	}
+}
+
+namespace std {
+
+
+	template<class T, class CharT>
+	struct tostringfmt {
+		std::formatter<std::string> strfmt;
+
+		auto parse(auto& pc) {
+			return strfmt.parse(pc);
+		}
+
+		auto format(T const& p, auto& fc) {
+			return strfmt.format(to_string(p), fc);
+		}
+
+	};
+
+	template<class CharT>
+	struct formatter<srt::QuadricSurface, CharT> : tostringfmt<srt::QuadricSurface, CharT> {
+	};
+	template<class CharT>
+	struct formatter<srt::SymMatrix3X3, CharT> : tostringfmt<srt::SymMatrix3X3, CharT> {
+	};
+	template<class CharT>
+	struct formatter<srt::Vec3, CharT> : tostringfmt<srt::Vec3, CharT> {
+	};
+
+}
+
+
+namespace srt {
 
 	// not test yet! don't use!
 	// not test yet! don't use!
