@@ -1,6 +1,14 @@
 #include "Quadric.h"
+#include <format>
 
 namespace srt {
+
+	std::string to_string(SymMatrix3X3 const& q)
+	{
+		return std::format("[{:9} {:9} {:9}, {:9} {:9} {:9}, {:9} {:9} {:9}]", q.fM11, q.fM12, q.fM13,
+			q.fM12, q.fM22, q.fM23,
+			q.fM13, q.fM23, q.fM33);
+	}
 
 	void Quadric::shift(Vec3 r)
 	{

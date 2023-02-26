@@ -23,6 +23,8 @@ namespace srt {
 		SymMatrix3X3 operator-() const;
 
 	};
+
+	std::string to_string(SymMatrix3X3 const& q);
 	Vec3 dot(SymMatrix3X3 const& q, Vec3 const& v);
 
 

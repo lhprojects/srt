@@ -2,6 +2,7 @@
 #define SRT_VEC3_H
 
 #include <math.h>
+#include <string>
 #include "Real.h"
 
 namespace srt {
@@ -12,6 +13,9 @@ namespace srt {
 		Real fY;
 		Real fZ;
 	};
+
+	std::string to_string(Vec3 const& q);
+
 
 	inline Vec3 cross(Vec3 const& l, Vec3 const& r)
 	{

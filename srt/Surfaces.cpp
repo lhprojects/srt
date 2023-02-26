@@ -185,6 +185,9 @@ namespace srt {
 		}
 	}
 
+	std::string to_string(QuadricSurface const& q) {
+		return std::format("Q = {};\nP = {};\nR = {}\n", q.fQ, q.fP, q.fR);
+	}
 
 	void SphereSurface::process(Ray const& r,
 		ProcessHandler& handler) const {
@@ -286,4 +289,6 @@ namespace srt {
 	{
 		return std::make_shared<ShiftSurface>(sur, s);
 	}
+
+
 }

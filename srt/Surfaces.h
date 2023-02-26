@@ -46,20 +46,9 @@ namespace srt {
 		pars::check(QuadricSurface::pars_, args...);
 		return std::make_shared<QuadricSurface>(args...);
 	}
+	
+	std::string to_string(QuadricSurface const& q);
 
-	inline std::string to_string(SymMatrix3X3 const& q) {
-		return std::format("[{:9} {:9} {:9}, {:9} {:9} {:9}, {:9} {:9} {:9}]", q.fM11, q.fM12, q.fM13,
-			q.fM12, q.fM22, q.fM23,
-			q.fM13, q.fM23, q.fM33);
-	}
-
-	inline std::string to_string(Vec3 const& q) {
-		return std::format("[{:9} {:9} {:9}]", q.fX, q.fY, q.fZ);
-	}
-
-	inline std::string to_string(QuadricSurface const& q) {
-		return std::format("Q = {};\nP = {};\nR = {}\n", q.fQ, q.fP, q.fR);
-	}
 }
 
 namespace std {
