@@ -1359,6 +1359,33 @@ void timeUniformNorm() {
     //printf("%f\n", c/(1000 * 1000));
 }
 
+
+void testCone(int) {
+    
+    auto qs = quadricSurface(pars::shape = ShapeType::Cone,
+        pars::radius = 1.,
+        pars::direction = Vec3{0,0,1},
+        pars::top_height = 2,
+        pars::top_radius = 0.5);
+
+    Engine en;
+    en.addDevice(qs);
+    addRoom(en);
+
+    PictureOpts opts(
+        pars::width = 1000,
+        pars::high = 1000,
+        pars::antiAliasLevel = 2,
+        pars::lightOrigin = Vec3{ 3,3, 3 },
+        pars::origin = Vec3{ 10,0,2.5 },
+        pars::lookAt = Vec3{ 0,0,0 },
+        pars::fieldOfView = 1.2);
+    auto bmp = en.devicesPicture(opts);
+    bmp.write("output/cone.png");
+
+    
+}
+
 void do_run(void (f)(), char const* s)
 {
     printf("%30s ", s);
@@ -1377,11 +1404,12 @@ void real_main()
 
 
     int q = kGOOD;
+    run(testCone(kFAST));
     run(timeUniformNorm());
+    run(testSphere(kFAST));
     run(testBoxSurface(kGOOD));
     run(testParabola());
     run(testLookAt());
-    run(blueSky(kGOOD));
     run(testUniform());
     run(testPlankLaw());
     run(testT2Color());
@@ -1389,18 +1417,18 @@ void real_main()
     run(source_distribution(1));
     run(dispersivePrism(kFAST));
     run(Glass(kFAST));
-    run(testSphere(kFAST));
+    run(blueSky(kGOOD));
     run(BoundDiagram());
     run(testSphereRefract());
     run(newtainTelescope(kFAST));
     run(testPlaneStop());
     run(testWaveLengthToColor());
+    run(blueSky(kBEST));
 
 }
 
 
 int main() {
-    run(blueSky(kBEST));
     real_main();
     return 0;
 }

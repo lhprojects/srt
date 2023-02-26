@@ -191,6 +191,10 @@ namespace srt {
 		void traceRay(Ray const& ray);
 	};
 
+	struct TracingStrategy {
+
+	};
+
 	struct ProcessReflection {
 		RayTracing& rt;
 
@@ -407,7 +411,7 @@ namespace srt {
 					pr = normalize(pr);
 				}
 
-
+				
 				if (the_level < 1) {
 					if (reflect > 0) {
 						doMirrorReflect(reflect, pr);

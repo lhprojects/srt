@@ -7,7 +7,7 @@ namespace srt {
 	struct Plane
 	{
 
-		using Pars = pars::Pars<pars::origin_, pars::direction_>;
+		constexpr static auto pars_ = pars::origin | pars::direction;
 
 		Plane() = default;
 
@@ -18,13 +18,13 @@ namespace srt {
 
 		Plane(pars::argument auto const &... args)
 		{
-			pars::check<Pars>(args...);
+			pars::check(pars_, args...);
 			set(pars::uncheck, args...);
 		}
 
 		void set(pars::argument auto const &... args)
 		{
-			pars::check<Pars>(args...);
+			pars::check(pars_, args...);
 			set(pars::uncheck, args...);
 		}
 

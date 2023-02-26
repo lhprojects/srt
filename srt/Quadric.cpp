@@ -72,6 +72,37 @@ namespace srt {
 		setConicSurface(origin, d, radius, -1.);
 	}
 
+	void Quadric::setCone(Vec3 origin,
+		Vec3 d,
+		Real botRadius,
+		Real topH,
+		Real topRadius) {
+
+		// (n1 . r)^2 + (n2 . r)^2 - (botRadius + h*(r . d))^2 = 0
+		// r^2 - (1+h)(r . d)^2 - 2*botRadius*h*d . r - botRadius^2 = 0
+		// h = (topRadius-botRadius)/topH
+
+		d = normalize(d);
+
+		Real h = (topRadius - botRadius) / topH;
+		Real onePlush2 = 1 + h*h;
+		fQ.fM11 = (1 - onePlush2 * d.fX * d.fX);
+		fQ.fM22 = (1 - onePlush2 * d.fY * d.fY);
+		fQ.fM33 = (1 - onePlush2 * d.fZ * d.fZ);
+
+		fQ.fM12 = (-onePlush2 * d.fX * d.fY);
+		fQ.fM13 = (-onePlush2 * d.fX * d.fZ);
+		fQ.fM23 = (-onePlush2 * d.fY * d.fZ);
+
+		fP = -2 * botRadius * h * d;
+
+		fR = -botRadius * botRadius;
+
+		shift(origin);
+
+
+	}
+
 	void Quadric::setTube(Vec3 origin,
 		Vec3 d,
 		Real radius)

@@ -142,28 +142,28 @@ namespace srt
 
 		void setBrightness(Real amp);
 
-		using Pars = pars::Pars<pars::reflectRatio_,
-			pars::innerReflectRatio_,
-			pars::outerReflectRatio_,
-			pars::reflectType_,
-			pars::innerReflectType_,
-			pars::outerReflectType_,
-			pars::refractRatio_,
-			pars::in2OutRefractRatio_,
-			pars::out2InRefractRatio_,
-			pars::innerIndex_,
-			pars::outerIndex_,
-			pars::innerPredefinedSellmeier3_,
-			pars::outerPredefinedSellmeier3_,
-			pars::pictureColor_,
-			pars::innerPictureColor_,
-			pars::outerPictureColor_,
-			pars::brightness_,
-			pars::spectrum_>;
+		static constexpr auto pars_ = pars::reflectRatio|
+			pars::innerReflectRatio |
+			pars::outerReflectRatio |
+			pars::reflectType |
+			pars::innerReflectType |
+			pars::outerReflectType |
+			pars::refractRatio |
+			pars::in2OutRefractRatio |
+			pars::out2InRefractRatio |
+			pars::innerIndex |
+			pars::outerIndex |
+			pars::innerPredefinedSellmeier3 |
+			pars::outerPredefinedSellmeier3 |
+			pars::pictureColor |
+			pars::innerPictureColor |
+			pars::outerPictureColor |
+			pars::brightness |
+			pars::spectrum;
 
 		void set(pars::argument auto const &... args)
 		{
-			pars::check<Pars>(args...);
+			pars::check(pars_, args...);
 			set(pars::uncheck, args...);
 		}
 

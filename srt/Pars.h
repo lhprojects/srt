@@ -24,6 +24,7 @@ namespace srt {
 		Shpere,
 		Parabola,
 		Tube,
+		Cone,
 	};
 
 	struct Bound;
@@ -38,10 +39,12 @@ namespace srt {
 		template<class ParTag, class Value>
 		struct arg {
 
+#if 0
 			template<class V>
 			arg(arg_tag, V&& v) : value(std::forward<V>(v))
 			{
 			}
+#endif
 
 			Value value;
 			using Par = ParTag;
@@ -63,18 +66,20 @@ namespace srt {
 		template<class ParTag, class ParV >
 		struct par {
 
-			par& operator=(par const& v) = delete;
-			par& operator=(par&& v) = delete;
+			//par& operator=(par const& v) = delete;
+			//par& operator=(par&& v) = delete;
 
 			template<class V>
 			requires std::is_convertible_v<V&&, ParV>
 			arg<ParTag, ParV> operator=(V&& v) const
 			{
-				return arg<Par, ParV>(arg_tag(), std::forward<V>(v));
+				return { ParV((V&&)v) };
+				//return arg<Par, ParV>(arg_tag(), std::forward<V>(v));
 			}
 
 			using Par = ParTag;
 		};
+
 
 
 		template<class Par>
@@ -115,7 +120,7 @@ namespace srt {
 		}
 
 		template<class Par, class T, class Par0, class Arg0T, argument... Args>
-		auto&& get(par<Par, T> const& p,
+		T get(par<Par, T> const& p,
 			arg<Par0, Arg0T>& arg0,
 			Args &&... args)
 		{
@@ -128,7 +133,7 @@ namespace srt {
 		}
 
 		template<class Par, class T, class Par0, class Arg0T, argument... Args>
-		auto&& get(par<Par, T> const& p,
+		T get(par<Par, T> const& p,
 			arg<Par0, Arg0T> const& arg0,
 			Args &&... args)
 		{
@@ -141,7 +146,7 @@ namespace srt {
 		}
 
 		template<class Par, class T, class Def, argument... Args>
-		auto&& get_default(par<Par, T> const &p,
+		T get_default(par<Par, T> const &p,
 			Def&& def, Args && ... args)
 		{
 			if constexpr (has<Args...>(par<Par, T>())) {
@@ -174,17 +179,42 @@ namespace srt {
 
 
 		// check the argument in parameters
-		template<class... Pars_, class ArgPar, class ArgT>
-		void check_1arg_in_pars(Pars<Pars_...>, arg<ArgPar, ArgT> const& arg)
-		{
-			static_assert(((std::is_same_v<ArgPar, Pars_>) || ...), "Arg must be one of Parameters");
+		template<class T>
+		struct GetTag;
+
+		template<class T, class V>
+		struct GetTag<par<T, V> > {
+			using type = T;
+		};
+
+		// check the argument in parameters
+		template<class ArgPar, class... ParsTag>
+		void check_arg_in_pars() {
+			static_assert(((std::is_same_v<ArgPar, ParsTag>) || ...), "Arg must be one of Parameters");
+		}
+
+		// check the argument in parameters
+		template<class ArgPar, class ArgT, class... Pars_>
+		void check_1arg_in_pars(arg<ArgPar, ArgT> const& arg, Pars< Pars_...>) {
+			check_arg_in_pars<ArgPar, typename GetTag<Pars_>::type ...>();
+		}
+
+		// check the argument in parameters
+		template<class ArgPar, class ArgT, class... Pars_>
+		void check_1arg_in_pars2(arg<ArgPar, ArgT> const& arg, Pars<Pars_...>) {
+			check_arg_in_pars<ArgPar, Pars_ ...>();
+		}
+
+		template<class ParsPack, argument... Args>
+		void check(argument auto const&... args) {
+			(check_1arg_in_pars2(args, ParsPack()), ...);
 		}
 
 		// check arguments in parameters
 		template<class ParsPack, argument... Args>
-		void check(argument auto const&... args)
+		void check(ParsPack, argument auto const&... args)
 		{
-			(check_1arg_in_pars(ParsPack(), args), ...);
+			(check_1arg_in_pars(args, ParsPack()), ...);
 		}
 
 
@@ -214,17 +244,46 @@ namespace srt {
 		template<class... ParPacks>
 		using MergePars = typename MergeParsImpl<ParPacks...>::type;
 		
+
+		template<class T1, class T2, class T3, class T4>
+		constexpr Pars<par<T1, T2>, par<T3, T4> > operator|(par<T1, T2>, par<T3, T4>) {
+			return {};
+		}
+
+		template<class T1, class T2, class... T3>
+		constexpr Pars<T3..., par<T1, T2> > operator|(Pars<T3...>, par<T1, T2>) {
+			return {};
+		}
+		template<class T1, class T2, class... T3>
+		constexpr Pars<par<T1, T2>, T3...> operator|(par<T1, T2>, Pars<T3...>) {
+			return {};
+		}
+		template<class... T3, class... T4>
+		constexpr Pars<T3..., T4...> operator|(Pars<T3...>, Pars<T4...>) {
+			return {};
+		}
+
+		struct empty_; constexpr par<empty_, empty_> empty{};
+
+		template<class T1, class T2>
+		constexpr Pars<par<T1, T2>> operator|(par<empty_, empty_>, par<T1, T2>) {
+			return {};
+		}
+
 	}
+
+
 
 	//#define CONCEPT_MODULE 
 	//#include "Pars_.h"
 
 	namespace pars {
 
-		struct name_;
-		constexpr par<name_, std::string> name{};
-		struct radius_;
-		constexpr par<radius_, Real> radius{};
+		struct name_; constexpr par<name_, std::string> name{};
+		struct radius_; constexpr par<radius_, Real> radius{};
+		struct top_radius_; constexpr par<top_radius_, Real> top_radius{};
+		struct top_height_; constexpr par<top_height_, Real> top_height{};
+
 		struct color_;
 		constexpr par<color_, srt::Color> color{};
 		struct fontSize_;
@@ -233,10 +292,8 @@ namespace srt {
 		struct horizentalAlign_; constexpr par<horizentalAlign_, HorizentalAlign> horizentalAlign{};
 		struct high_; constexpr par<high_, int> high{};
 		struct width_; constexpr par<width_, int> width{};
-		struct origin_;
-		constexpr par<origin_, Vec3> origin{};
-		struct direction_;
-		constexpr par<direction_, Vec3> direction{};
+		struct origin_; constexpr par<origin_, Vec3> origin{};
+		struct direction_; constexpr par<direction_, Vec3> direction{};
 		struct n1_;
 		constexpr par<n1_, Vec3> n1{};
 		struct n1Min_;

@@ -48,10 +48,16 @@ namespace srt {
 		void set(pars::uncheck_t, Args const &...args)
 		{
 			pars::set(fO, pars::origin, args...);
-			pars::set(fN1, pars::n1, args...);
-			pars::set(fN2, pars::n2, args...);
-			fN1 = normalize(fN1);
-			fN2 = normalize(fN2);
+
+			if constexpr (pars::has<Args...>(pars::n1)) {
+				pars::set(fN1, pars::n1, args...);
+				fN1 = normalize(fN1);
+			}
+			if constexpr (pars::has<Args...>(pars::n2)) {
+				pars::set(fN1, pars::n2, args...);
+				fN2 = normalize(fN2);
+			}
+
 			pars::set(fN1Min, pars::n1Min, args...);
 			pars::set(fN1Max, pars::n1Max, args...);
 			pars::set(fN2Min, pars::n2Min, args...);
@@ -132,12 +138,12 @@ namespace srt {
 	inline std::shared_ptr<Source> comSource(
 		pars::argument auto const &... args)
 	{
-		using Pars = pars::Pars<pars::amp_,
-			pars::spectrum_,
-			pars::directionSampler_,
-			pars::positionSampler_>;
+		constexpr auto pars_ = pars::amp |
+			pars::spectrum |
+			pars::directionSampler|
+			pars::positionSampler;
 
-		pars::check<Pars>(args...);
+		pars::check(pars_, args...);
 		static_assert(pars::has<decltype(args)...>(pars::amp));
 		static_assert(pars::has<decltype(args)...>(pars::spectrum));
 		static_assert(pars::has<decltype(args)...>(pars::directionSampler),

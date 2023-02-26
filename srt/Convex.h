@@ -2,6 +2,7 @@
 
 #include "Vec3.h"
 #include "Surface.h"
+#include <span>
 
 namespace srt {
 

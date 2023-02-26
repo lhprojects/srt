@@ -16,6 +16,10 @@ namespace srt {
 
 	 struct ProcessHandler {
 		HandlerType fType;
+
+		constexpr bool isDistancing() const {
+			return fType == HandlerType::Distance;
+		}
 	};
 
 	 struct DistanceHandler : ProcessHandler {
@@ -73,7 +77,7 @@ namespace srt {
 		std::string const& getName() const;
 		void setName(std::string name);
 
-		using Pars = pars::Pars<pars::name_>;
+		static constexpr auto pars_ = pars::empty | pars::name;
 
 		void set(pars::uncheck_t, pars::argument auto const & ...args)
 		{
@@ -82,7 +86,7 @@ namespace srt {
 
 		void set(pars::argument auto const & ...args)
 		{
-			pars::check<Pars>(args...);
+			pars::check(pars_, args...);
 			set(pars::uncheck, args...);
 		}
 

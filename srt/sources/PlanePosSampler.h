@@ -7,8 +7,8 @@ namespace srt {
 
 	struct PlanePosSampler : PositionSampler
 	{
-		using Pars = pars::Pars<pars::origin_, pars::n1_, pars::n1Min_, pars::n1Max_,
-				pars::n2_, pars::n2Min_, pars::n2Max_, pars::bound_>;
+		static constexpr auto pars_ = pars::origin| pars::n1 | pars::n1Min | pars::n1Max |
+				pars::n2 | pars::n2Min | pars::n2Max | pars::bound;
 
 		PlanePosSampler(pars::uncheck_t,
 			pars::argument auto const &...args)
@@ -18,13 +18,13 @@ namespace srt {
 
 		PlanePosSampler(pars::argument auto const &...args)
 		{
-			pars::check<Pars>(args...);
+			pars::check(pars_, args...);
 			set(pars::uncheck, args...);
 		}
 
 		void set(pars::argument auto const &...args)
 		{
-			pars::check<Pars>(args...);
+			pars::check(pars_, args...);
 			set(pars::uncheck, args...);
 		}
 
@@ -86,7 +86,7 @@ namespace srt {
 	std::shared_ptr<PlanePosSampler> planePositionSampler(
 		pars::argument auto const &... args...)
 	{
-		pars::check<PlanePosSampler::Pars>(args...);
+		pars::check(PlanePosSampler::pars_, args...);
 		return std::make_shared<PlanePosSampler>(args...);
 
 	}

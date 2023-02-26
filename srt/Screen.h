@@ -87,13 +87,11 @@ namespace srt {
 
 		Screen() {}
 
-		using Pars = pars::Pars<pars::record_,
-			pars::recordIn2Out_,
-			pars::recordOut2In_>;
+		static constexpr auto pars_ = pars::record | pars::recordIn2Out | pars::recordOut2In;
 
 		void set(pars::argument auto const &... args)
 		{
-			pars::check<Pars>(args...);
+			pars::check(pars_, args...);
 			set(args...);
 		}
 
@@ -129,12 +127,11 @@ namespace srt {
 	{
 		PlaneScreen() = default;
 
-		using Pars = pars::MergePars<PlaneSurface::Pars,
-			Screen::Pars>;
+		static constexpr auto pars_ = PlaneSurface::pars_ | Screen::pars_;
 
 		PlaneScreen(pars::argument auto const &... args)
 		{
-			pars::check<Pars>(args...);
+			pars::check(pars_, args...);
 			// by default screen is non-refractive and non-reflective
 			set(pars::uncheck, pars::in2OutRefractRatio = 0);
 			set(pars::uncheck, pars::out2InRefractRatio = 0);
@@ -155,7 +152,7 @@ namespace srt {
 
 		void set(pars::argument auto const &... args)
 		{
-			pars::check<Pars>(args...);
+			pars::check(pars_, args...);
 			set(pars::uncheck, args...);
 		}
 

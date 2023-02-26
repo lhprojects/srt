@@ -97,7 +97,7 @@ namespace srt {
 	struct QuadricBound : Bound, Quadric
 	{
 
-		using Pars = Quadric::Pars;
+		static constexpr auto pars_ = Quadric::pars_;
 
 		QuadricBound(pars::argument auto const &... args)
 		{
@@ -117,7 +117,7 @@ namespace srt {
 
 	 std::shared_ptr<QuadricBound> quadricBound(pars::argument auto const &... args)
 	{
-		pars::check<QuadricBound::Pars>(args...);
+		pars::check(QuadricBound::pars_, args...);
 		return std::make_shared<QuadricBound>(args...);
 	}
 
@@ -140,7 +140,7 @@ namespace srt {
 
 	inline std::shared_ptr<PlaneBound> planeBound(pars::argument auto const &... args)
 	{
-		pars::check<QuadricBound::Pars>(args...);
+		pars::check(QuadricBound::pars_, args...);
 		return std::make_shared<PlaneBound>(args...);
 	}
 

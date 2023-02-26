@@ -16,7 +16,7 @@ namespace srt {
 	struct QuadricSurface : Surface, Quadric
 	{
 
-		using Pars = pars::MergePars<Surface::Pars, Quadric::Pars>;
+		static constexpr auto pars_ = Surface::pars_ | Quadric::pars_;
 
 		QuadricSurface(pars::argument auto const &... args)
 		{
@@ -30,7 +30,7 @@ namespace srt {
 
 		void set(pars::argument auto const &... args)
 		{
-			pars::check<Pars>(args...);
+			pars::check(pars_, args...);
 			set(pars::uncheck, args...);
 		}
 
@@ -50,7 +50,7 @@ namespace srt {
 
 	std::shared_ptr<QuadricSurface> quadricSurface(pars::argument auto const &... args)
 	{
-		pars::check<QuadricSurface::Pars>(args...);
+		pars::check(QuadricSurface::pars_, args...);
 		return std::make_shared<QuadricSurface>(args...);
 	}
 
@@ -59,7 +59,7 @@ namespace srt {
 	// not test yet! don't use!
  	struct SphereSurface : Surface, Sphere {
 
-		using Pars = pars::MergePars<Surface::Pars, Sphere::Pars>;
+		static constexpr auto pars_ = Surface::pars_ | Sphere::pars_;
 
 		SphereSurface(pars::argument auto const &... args) {
 			set(args...);
@@ -70,7 +70,7 @@ namespace srt {
 		}
 
 		void set(pars::argument auto const &... args) {
-			pars::check<Pars>(args...);
+			pars::check(pars, args...);
 			set(pars::uncheck, args...);
 		}
 
@@ -91,8 +91,7 @@ namespace srt {
 	{
 		PlaneSurface() = default;
 
-		using Pars = pars::MergePars<Surface::Pars,
-			Plane::Pars>;
+		static constexpr auto pars_ = Surface::pars_ | Plane::pars_;
 
 		PlaneSurface(pars::argument auto const &... args)
 		{
@@ -107,7 +106,7 @@ namespace srt {
 
 		void set(pars::argument auto const &... args)
 		{
-			pars::check<Pars>(args...);
+			pars::check(pars_, args...);
 			Surface::set(pars::uncheck, args...);
 			Plane::set(pars::uncheck, args...);
 		}
@@ -119,7 +118,7 @@ namespace srt {
 
 	std::shared_ptr<PlaneSurface> planeSurface(pars::argument auto const &... args)
 	{
-		pars::check<PlaneSurface::Pars>(args...);
+		pars::check(PlaneSurface::pars_, args...);
 		return std::make_shared<PlaneSurface>(args...);
 	}
 

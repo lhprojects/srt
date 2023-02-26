@@ -130,12 +130,12 @@ namespace srt {
 		void setFieldOfView1(Real s)
 		{
 			N1Min = -s / 2;
-			N1Max = s / 2;
+			N1Max = +s / 2;
 		}
 		void setFieldOfView2(Real s)
 		{
 			N2Min = -s / 2;
-			N2Max = s / 2;
+			N2Max = +s / 2;
 		}
 
 		void setOrigin(Vec3 o)

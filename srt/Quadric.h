@@ -20,42 +20,15 @@ namespace srt {
 		Real fM23{};
 		Real fM33{};
 
-		SymMatrix3X3 operator-() const {
-			return SymMatrix3X3{ -fM11, -fM12, -fM13,
-			-fM22, -fM23, -fM33 };
-		}
+		SymMatrix3X3 operator-() const;
 
 	};
+	Vec3 dot(SymMatrix3X3 const& q, Vec3 const& v);
 
-	inline SymMatrix3X3::SymMatrix3X3() {}
-	inline SymMatrix3X3::SymMatrix3X3(Real m11, Real m12, Real m13,
-		Real m22, Real m23, Real m33) {
-		fM11 = m11;
-		fM12 = m12;
-		fM13 = m13;
-		fM22 = m22;
-		fM23 = m23;
-		fM33 = m33;
-	}
-
-	inline Vec3 dot(SymMatrix3X3 const& q, Vec3 const& v)
-	{
-		return { q.fM11 * v.fX +
-				q.fM12 * v.fY +
-				q.fM13 * v.fZ,
-				q.fM12 * v.fX +
-				q.fM22 * v.fY +
-				q.fM23 * v.fZ,
-				q.fM13 * v.fX +
-				q.fM23 * v.fY +
-				q.fM33 * v.fZ,
-		};
-	}
 
 	struct Sphere {
-		using Pars = pars::Pars<pars::shape_,
-			pars::origin_,
-			pars::radius_>;
+
+		static constexpr auto pars_ = pars::shape | pars::origin | pars::radius;
 
 		void setSphere(
 			Vec3 center,
@@ -63,7 +36,7 @@ namespace srt {
 		bool inner(Vec3 const& p) const;
 
 		void set(pars::argument auto const &... args) {
-			pars::check<Pars>(args...);
+			pars::check(pars_, args...);
 			set(pars::uncheck, args...);
 		}
 
@@ -97,6 +70,12 @@ namespace srt {
 			Vec3 direction,
 			Real radius);
 
+		void setCone(Vec3 origin,
+			Vec3 direction,
+			Real botRadius,
+			Real topH,
+			Real topRadius);
+
 		// https://en.wikipedia.org/wiki/Conic_constant
 		void setConicSurface(Vec3 origin,
 			Vec3 direction,
@@ -111,12 +90,15 @@ namespace srt {
 
 		void shift(Vec3 r);
 
-		using Pars = pars::Pars<pars::shape_, pars::origin_,
-			pars::direction_, pars::radius_>;
+
+
+		static constexpr auto pars_ = pars::shape| pars::origin |
+			pars::direction | pars::radius |
+			pars::top_height | pars::top_radius;
 
 		void set(pars::argument auto const &... args)
 		{
-			pars::check<Pars>(args...);
+			pars::check(pars_, args...);
 			set(pars::uncheck, args...);
 		}
 
@@ -160,6 +142,22 @@ namespace srt {
 					else {
 						throw "";
 					}
+				} else if (type == ShapeType::Cone) {
+					constexpr bool d = pars::has<decltype(args)...>(pars::top_height);
+					constexpr bool e = pars::has<decltype(args)...>(pars::top_radius);
+
+					if constexpr (b && c && d && e) {
+						Vec3 origin = pars::get_default(pars::origin, Vec3{ 0,0,0 }, args...);
+						Vec3 direction = pars::get(pars::direction, args...);
+						setCone(origin,
+							direction,
+							pars::get(pars::radius, args...),
+							pars::get(pars::top_height, args...),
+							pars::get(pars::top_radius, args...)
+						);
+					} else {
+						throw "";
+					}
 				}
 				else {
 					throw "";
@@ -177,6 +175,39 @@ namespace srt {
 		Real fR{};
 	};
 
+
+
+
+
+
+	inline SymMatrix3X3 SymMatrix3X3::operator-() const {
+		return SymMatrix3X3{ -fM11, -fM12, -fM13,
+		-fM22, -fM23, -fM33 };
+	}
+
+	inline SymMatrix3X3::SymMatrix3X3() {}
+	inline SymMatrix3X3::SymMatrix3X3(Real m11, Real m12, Real m13,
+		Real m22, Real m23, Real m33) {
+		fM11 = m11;
+		fM12 = m12;
+		fM13 = m13;
+		fM22 = m22;
+		fM23 = m23;
+		fM33 = m33;
+	}
+
+	inline Vec3 dot(SymMatrix3X3 const& q, Vec3 const& v) {
+		return { q.fM11 * v.fX +
+				q.fM12 * v.fY +
+				q.fM13 * v.fZ,
+				q.fM12 * v.fX +
+				q.fM22 * v.fY +
+				q.fM23 * v.fZ,
+				q.fM13 * v.fX +
+				q.fM23 * v.fY +
+				q.fM33 * v.fZ,
+		};
+	}
 
 }
 #endif
