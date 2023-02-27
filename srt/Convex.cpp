@@ -59,7 +59,7 @@ namespace srt {
 		for (auto& s : surfaces) {
 			c->addSurface(s);
 		}
-		return std::move(c);
+		return c;
 	}
 
 

@@ -529,11 +529,11 @@ namespace srt {
 			if (!(ray_level <= opts.max_level && ray.fAmp >= opts.min_ray_amp)) {
 				continue;
 			} else {
-				handler.process = false;
+				handler.hit = false;
 
 				(void)emitRay(devs, ray, handler);
 
-				if (!handler.process) {
+				if (!handler.hit) {
 					if (recorder)
 						recorder(Event::Escape, ray, ray_level + 1, handler);
 					continue;
@@ -681,7 +681,7 @@ namespace srt {
 
 			dev->process(testRay, ph);
 
-			if (ph.process) {
+			if (ph.hit) {
 				Color surfaceColor = !ph.inner ?
 					ph.property->fInnerPictureColor :
 					ph.property->fOuterPictureColor;
@@ -747,11 +747,11 @@ namespace srt {
 		Color color = { 0,0,0,0 };
 		for (int i = 0; i < 999; ++i) {
 
-			ph.process = false;
+			ph.hit = false;
 			(void)emitRay(fDevices, ray, ph);
 
-			if (ph.process) {
-				ph.process = false;
+			if (ph.hit) {
+				ph.hit = false;
 
 				Color surfaceColor = ph.inner ?
 					ph.property->fInnerPictureColor :

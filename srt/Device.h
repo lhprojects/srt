@@ -49,7 +49,7 @@ namespace srt {
 		bool record = false;
 
 
-		bool process = false;
+		bool hit = false;
 		// inner to outer?
 		Vec3 inter = {};
 		bool inner = false;
@@ -63,7 +63,7 @@ namespace srt {
 			SurfaceProperties const* property,
 			Device const* device)
 		{
-			this->process = true;
+			this->hit = true;
 			this->inter = inter;
 			this->N = N;
 			this->property = property;
