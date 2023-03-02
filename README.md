@@ -26,7 +26,8 @@ Dense air
 ![](results/sunblue_l0.500000.png)
 ![](results/sunfail_l0.500000.png)
 
-Nondense air
+
+Sparse air
 
 ![](results/sunblue_l2.000000.png)
 ![](results/sunfail_l2.000000.png)
