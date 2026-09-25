@@ -17,7 +17,10 @@ namespace srt {
 
 		Vec3 fO;
 		Vec3 fD; // direction normalized
-		Vec3 fP; // polarization normalized
+		// polarization, normalized; (0,0,0) means not drawn yet: rays from
+		// diffuse, metal or scattering events get one only when a surface
+		// needs it (see ReflectType::Optical in Engine.cpp)
+		Vec3 fP;
 
 		Real fAmp;
 		Real fLambda;

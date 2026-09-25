@@ -257,7 +257,7 @@ namespace srt {
 		void doMirrorReflect(Real reflect) {
 			Vec3 rd = reflectDirection(N, ray.fD);
 			Ray newRay(inter, rd, reflect * ray.fAmp, ray);
-			newRay.fP = randomNorm(rd);
+			newRay.fP = Vec3{}; // unset: drawn when a surface needs it
 			this->newRay(newRay, Event::Reflect);
 		}
 
@@ -266,7 +266,7 @@ namespace srt {
 			if (transDirection(N, ray.fD,
 				fromIndex, toIndex, td)) {
 				Ray newRay(inter, td, trans * ray.fAmp, ray);
-				newRay.fP = randomNorm(td);
+				newRay.fP = Vec3{}; // unset: drawn when a surface needs it
 				this->newRay(newRay, Event::Refract);
 			}
 		}
@@ -274,21 +274,21 @@ namespace srt {
 		void doDiffuseReflect(Real reflect) {
 			Vec3 rd = randomDiffuseRay(N);
 			Ray newRay(inter, rd, reflect * ray.fAmp, ray);
-			newRay.fP = randomNorm(rd);
+			newRay.fP = Vec3{}; // unset: drawn when a surface needs it
 			this->newRay(newRay, Event::Reflect);
 		};
 
 		void doDiffuseTrans(Real trans) {
 			Vec3 rd = randomDiffuseRay(-N);
 			Ray newRay(inter, rd, trans * ray.fAmp, ray);
-			newRay.fP = randomNorm(rd);
+			newRay.fP = Vec3{}; // unset: drawn when a surface needs it
 			this->newRay(newRay, Event::Refract);
 		};
 
 		void doExpReflect(Real reflect) {
 			Vec3 rd = randomMetalRay(ray.fD, N, 0.15);
 			Ray newRay(inter, rd, reflect * ray.fAmp, ray);
-			newRay.fP = randomNorm(rd);
+			newRay.fP = Vec3{}; // unset: drawn when a surface needs it
 			this->newRay(newRay, Event::Reflect);
 		};
 
@@ -298,7 +298,7 @@ namespace srt {
 				fromIndex, toIndex, td)) {
 				Vec3 rd = randomMetalRay(td, -N, 0.15);
 				Ray newRay(inter, rd, trans * ray.fAmp, ray);
-				newRay.fP = randomNorm(rd);
+				newRay.fP = Vec3{}; // unset: drawn when a surface needs it
 				this->newRay(newRay, Event::Refract);
 			}
 		};
@@ -337,7 +337,7 @@ namespace srt {
 		void doRayleighReflect(Real reflect) {
 			Vec3 rd = randomRayleigh(ray.fD);
 			Ray newRay(inter, rd, reflect * ray.fAmp, ray);
-			newRay.fP = randomNorm(rd);
+			newRay.fP = Vec3{}; // unset: drawn when a surface needs it
 			this->newRay(newRay, Event::Reflect);
 		}
 
@@ -378,8 +378,12 @@ namespace srt {
 
 				Vec3 ns = normalize(cross(ray.fD, N));
 				Vec3 np = normalize(cross(ns, ray.fD));
-				Real A_s = dot(ns, ray.fP);
-				Real A_p = dot(np, ray.fP);
+				// a ray whose polarization was never needed has none yet; a
+				// random one drawn now has the same distribution as one drawn
+				// when the ray was made, as the direction has not changed
+				Vec3 P = norm2(ray.fP) > 0 ? ray.fP : randomNorm(ray.fD);
+				Real A_s = dot(ns, P);
+				Real A_p = dot(np, P);
 
 				if (checkRefractDirection(N, ray.fD, fromIndex, toIndex)) {
 
