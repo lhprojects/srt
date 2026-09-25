@@ -20,7 +20,7 @@ find_package(Threads REQUIRED)
 target_link_libraries(srt PUBLIC Threads::Threads)
 
 if(MSVC)
-    target_compile_options(srt PUBLIC /utf-8 /bigobj)
+    target_compile_options(srt PUBLIC /bigobj)
 else()
     # Windows loads fonts from C:\Windows\Fonts; elsewhere fontconfig finds them
     find_package(Fontconfig REQUIRED)
