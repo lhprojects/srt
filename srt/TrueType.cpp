@@ -1,6 +1,7 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include "TrueType.h"
 #include <vector>
+#include <cstring>
 
 namespace srt {
 

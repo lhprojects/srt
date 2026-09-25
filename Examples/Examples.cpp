@@ -6,6 +6,8 @@ using namespace srt;
 #include <fstream>
 #include <chrono>
 #include <filesystem>
+#include <string>
+#include <vector>
 
 
 int const kFAST = 0;
@@ -1386,15 +1388,38 @@ void testCone(int) {
     
 }
 
+// examples picked on the command line; empty means run all
+std::vector<std::string> gSelected;
+
+bool selected(char const* s)
+{
+    if (gSelected.empty()) {
+        return true;
+    }
+    std::string call = s;
+    std::string name = call.substr(0, call.find('('));
+    for (auto const& sel : gSelected) {
+        if (sel == call || sel == name) {
+            return true;
+        }
+    }
+    return false;
+}
+
 void do_run(void (f)(), char const* s)
 {
+    if (!selected(s)) {
+        return;
+    }
     printf("%30s ", s);
+    fflush(stdout);
     auto t0 = std::chrono::high_resolution_clock::now();
     f();
     auto t1 = std::chrono::high_resolution_clock::now();
     using seconds = std::chrono::duration<double>;
     double d = seconds(t1 - t0).count();
     printf("%10fs\n", d);
+    fflush(stdout);
 }
 
 
@@ -1437,8 +1462,11 @@ void real_main()
 }
 
 
-int main() {
-    
+// usage: examples [name ...]
+// name is a function (e.g. blueSky) or a call (e.g. "blueSky(kBEST)")
+int main(int argc, char* argv[]) {
+
+    gSelected.assign(argv + 1, argv + argc);
     real_main();
     return 0;
 }

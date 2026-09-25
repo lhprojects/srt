@@ -1,0 +1,42 @@
+name: build
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install fontconfig and fonts
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libfontconfig1-dev fonts-liberation
+
+      - name: Configure
+        run: cmake -S . -B build
+
+      - name: Build
+        run: cmake --build build --config Release --parallel
+
+      # a quick subset; testParabola also draws text, which exercises font loading
+      - name: Run examples
+        shell: bash
+        run: |
+          exe=build/examples
+          [ -f build/Release/examples.exe ] && exe=build/Release/examples.exe
+          mkdir -p run && cd run
+          ../$exe testFormat testWaveLengthToColor testT2Color testPlankLaw testParabola
+          ls -l output
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: output-${{ matrix.os }}
+          path: run/output

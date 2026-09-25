@@ -17,7 +17,6 @@ namespace srt {
 		template<class R>
 		Range(R& r) : fB(r.begin()), fE(r.end()) {}
 
-		template<class IT>
 		Range(IT b, IT e) : fB(b), fE(e)
 		{
 		}

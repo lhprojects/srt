@@ -71,6 +71,7 @@ namespace srt
 			else {
 				fFunction = r.fFunction;
 			}
+			return *this;
 		}
 
 		RefractiveIndex &operator=(RefractiveIndex&& r) noexcept
@@ -82,6 +83,7 @@ namespace srt
 			else {
 				fFunction = std::move(r.fFunction);
 			}
+			return *this;
 		}
 
 		~RefractiveIndex() {}

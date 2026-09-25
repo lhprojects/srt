@@ -102,7 +102,7 @@ namespace srt {
 		template<class Arg, class Par, class T>
 		constexpr bool has1(par<Par, T> const& p)
 		{
-			return std::is_same_v<Arg::Par, Par>;
+			return std::is_same_v<typename Arg::Par, Par>;
 		}
 
 		//argument has wanted parameter?

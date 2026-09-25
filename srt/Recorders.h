@@ -10,14 +10,14 @@
 #include "Device.h"
 
 namespace srt {
-	extern constexpr int kDebugLight = 4;
-	extern constexpr int kDebugReflect = 2;
-	extern constexpr int kDebugRefract = 1;
-	extern constexpr int kDebugEscape = 8;
-	extern constexpr int kDebugDie = 16;
-	extern constexpr int kDebugScreen = 32;
-	extern constexpr int kDebugGenerate = 64;
-	extern constexpr int kDebugEnd = 128;
+	inline constexpr int kDebugLight = 4;
+	inline constexpr int kDebugReflect = 2;
+	inline constexpr int kDebugRefract = 1;
+	inline constexpr int kDebugEscape = 8;
+	inline constexpr int kDebugDie = 16;
+	inline constexpr int kDebugScreen = 32;
+	inline constexpr int kDebugGenerate = 64;
+	inline constexpr int kDebugEnd = 128;
 
 
 
