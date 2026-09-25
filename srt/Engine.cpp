@@ -21,6 +21,19 @@ namespace srt {
 
 	Real gSmin = 1E-8;
 
+	static int gThreadCount = 0;
+
+	void setThreadCount(int n) {
+		gThreadCount = n;
+	}
+
+	int threadCount() {
+		if (gThreadCount > 0) {
+			return gThreadCount;
+		}
+		return std::max(1, (int)std::thread::hardware_concurrency());
+	}
+
 	void PictureOpts::lookAt(Vec3 o) {
 		Vec3 r = normalize(o - Origin);
 		Vec3 z = { 0,0,1 };
@@ -874,7 +887,7 @@ namespace srt {
 			std::function<void(T& rt, int hstart, int hend, int jobID)> callback,
 			bool print_new_line = false)
 		{
-			int total = std::thread::hardware_concurrency();
+			int total = threadCount();
 			size_t w = bmp.fW;
 			size_t h = bmp.fH;
 

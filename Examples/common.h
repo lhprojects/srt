@@ -137,12 +137,21 @@ inline void do_run(void (f)(), char const* s)
 
 #define run(f) do_run([](){ f; }, #f)
 
-// usage: <program> [name ...]
+// usage: <program> [--threads N] [name ...]
 // name is a function (e.g. blueSky) or a call (e.g. "blueSky(kBEST)");
-// with no names every example in the program runs
+// with no names every example in the program runs. --threads N sets the
+// threads used for multi-threaded pictures (default: one per CPU core)
 inline void init_examples(int argc, char* argv[])
 {
-    gSelected.assign(argv + 1, argv + argc);
+    gSelected.clear();
+    for (int i = 1; i < argc; ++i) {
+        std::string arg = argv[i];
+        if (arg == "--threads" && i + 1 < argc) {
+            setThreadCount(atoi(argv[++i]));
+        } else {
+            gSelected.push_back(arg);
+        }
+    }
     std::filesystem::create_directory("./output");
 }
 

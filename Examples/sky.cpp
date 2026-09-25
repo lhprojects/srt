@@ -191,21 +191,25 @@ void blueSky(int q)
 
 int gQuality = kGOOD;
 
-// usage: sky [fast|good|best]    (default: good)
+// usage: sky [--threads N] [fast|good|best]    (default: good)
 int main(int argc, char* argv[])
 {
-    std::string q = argc > 1 ? argv[1] : "good";
-    if (q == "fast") {
+    // handles --threads; what is left is the quality, not example names
+    init_examples(argc, argv);
+    std::string q = gSelected.empty() ? "good" : gSelected[0];
+    bool extra = gSelected.size() > 1;
+    gSelected.clear();
+
+    if (q == "fast" && !extra) {
         gQuality = kFAST;
-    } else if (q == "good") {
+    } else if (q == "good" && !extra) {
         gQuality = kGOOD;
-    } else if (q == "best") {
+    } else if (q == "best" && !extra) {
         gQuality = kBEST;
     } else {
-        fprintf(stderr, "usage: sky [fast|good|best]\n");
+        fprintf(stderr, "usage: sky [--threads N] [fast|good|best]\n");
         return 1;
     }
-    std::filesystem::create_directory("./output");
 
     printf("quality: %s\n", q.c_str());
     run(blueSky(gQuality));

@@ -20,6 +20,11 @@ namespace srt {
 
 	extern Real gSmin;
 
+	// number of threads for multi-threaded pictures (PictureOpts::Mult);
+	// 0, the default, means one per CPU core
+	void setThreadCount(int n);
+	int threadCount();
+
 	struct PictureOpts
 	{
 
