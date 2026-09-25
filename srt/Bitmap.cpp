@@ -332,7 +332,7 @@ namespace srt {
 		}
 		Real pixelWidthY() const
 		{
-			return (yMax - yMin) / w;
+			return (yMax - yMin) / h;
 		}
 
 		Real pixel2WorldX(Real x) const
@@ -350,7 +350,7 @@ namespace srt {
 		}
 		Real worldToPixelY(Real y) const
 		{
-			return (y - yMin) / (yMax - yMin) * w;
+			return (y - yMin) / (yMax - yMin) * h;
 		}
 	};
 
