@@ -23,14 +23,14 @@ Simple Ray Tracing For Study
 ## sky and sunfail
 Dense air
 
-![](results/sunblue_l0.500000.png)
-![](results/sunfail_l0.500000.png)
+![](Examples/reference/sunblue_l0.500000.png)
+![](Examples/reference/sunfail_l0.500000.png)
 
 
 Sparse air
 
-![](results/sunblue_l2.000000.png)
-![](results/sunfail_l2.000000.png)
+![](Examples/reference/sunblue_l2.000000.png)
+![](Examples/reference/sunfail_l2.000000.png)
 
 ## raytracing for ray
 ![](Examples/reference/tube_picture.png)
@@ -38,7 +38,7 @@ Sparse air
 #  camera to light ray tracing for picturing.
 
 ## From left to right: diffusive sphere, silver sphere, galss sphere, metal sphere.
-![](results/shpere_on_floor_raytrace.png)
+![](Examples/reference/shpere_on_floor_raytrace.png)
 
 ## depth of view for box
 ![](Examples/reference/box_raytrace_good.png)
