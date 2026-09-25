@@ -27,5 +27,8 @@ else()
     target_link_libraries(srt PRIVATE Fontconfig::Fontconfig)
 endif()
 
-add_executable(examples Examples/Examples.cpp)
-target_link_libraries(examples PRIVATE srt)
+# one program per example topic, e.g. Examples/telescope.cpp -> telescope
+foreach(topic coma render telescope color prism sky sampling)
+    add_executable(${topic} Examples/${topic}.cpp)
+    target_link_libraries(${topic} PRIVATE srt)
+endforeach()

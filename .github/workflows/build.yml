@@ -26,14 +26,15 @@ jobs:
       - name: Build
         run: cmake --build build --config Release --parallel
 
-      # a quick subset; testParabola also draws text, which exercises font loading
+      # a quick subset; coma also draws text, which exercises font loading
       - name: Run examples
         shell: bash
         run: |
-          exe=build/examples
-          [ -f build/Release/examples.exe ] && exe=build/Release/examples.exe
           mkdir -p run && cd run
-          ../$exe testFormat testWaveLengthToColor testT2Color testPlankLaw testParabola
+          prog() { if [ -f ../build/Release/$1.exe ]; then echo ../build/Release/$1.exe; else echo ../build/$1; fi; }
+          $(prog color)
+          $(prog coma)
+          $(prog render) testFormat
           ls -l output
 
       - uses: actions/upload-artifact@v4
