@@ -5,7 +5,7 @@ Simple Ray Tracing For Study
 # Pictrues
 
 # comma
-![](Examples/reference/Par_screen.png)
+![](Examples/reference/coma_spot.png)
 
 # temperature to color
 ![](Examples/reference/Temp2Color.png)
