@@ -5,6 +5,10 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#ifndef _WIN32
+// link with -lfontconfig (pkg-config --libs fontconfig)
+#include <fontconfig/fontconfig.h>
+#endif
 
 namespace srt {
 
@@ -92,6 +96,32 @@ namespace srt {
 
 	};
 
+	static std::string defaultFontPath()
+	{
+#ifdef _WIN32
+		return "C:\\Windows\\Fonts\\times.ttf";
+#else
+		// ask fontconfig; it falls back to a metric-compatible font
+		// (e.g. Liberation Serif) if Times New Roman is not installed
+		std::string path;
+		FcInit();
+		FcPattern* pat = FcNameParse((FcChar8 const*)"Times New Roman");
+		FcConfigSubstitute(nullptr, pat, FcMatchPattern);
+		FcDefaultSubstitute(pat);
+		FcResult res;
+		FcPattern* match = FcFontMatch(nullptr, pat, &res);
+		FcChar8* file = nullptr;
+		if (match && FcPatternGetString(match, FC_FILE, 0, &file) == FcResultMatch) {
+			path = (char const*)file;
+		}
+		if (match) {
+			FcPatternDestroy(match);
+		}
+		FcPatternDestroy(pat);
+		return path;
+#endif
+	}
+
 	void Bitmap::draw(char const* text,
 		TextPaint const& paint,
 		Real x0, Real y0)
@@ -100,14 +130,7 @@ namespace srt {
 		tb.bitmap = this;
 		tb.color = paint.fColor;
 
-		auto get_font_folder = []() {
-#ifdef _MSC_VER
-			return std::string("C:\\Windows\\Fonts");
-#else
-			return "/usr/share/fonts";
-#endif
-		};
-		static TrueType tt(get_font_folder() + "/times.ttf");
+		static TrueType tt(defaultFontPath());
 
 		int xshift = 0;
 		if (paint.fHorizentalAlign == HorizentalAlign::Center) {
