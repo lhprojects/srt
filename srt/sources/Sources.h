@@ -54,7 +54,7 @@ namespace srt {
 				fN1 = normalize(fN1);
 			}
 			if constexpr (pars::has<Args...>(pars::n2)) {
-				pars::set(fN1, pars::n2, args...);
+				pars::set(fN2, pars::n2, args...);
 				fN2 = normalize(fN2);
 			}
 
