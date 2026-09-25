@@ -14,6 +14,9 @@ namespace srt {
 
 	private:
 		std::vector<std::shared_ptr<Surface>> fSurfaces;
+		// the faces as planes, filled only while every face is a PlaneSurface
+		std::vector<struct PlaneSurface const*> fPlanes;
+		bool fAllPlanes = true;
 	};
 
 	std::shared_ptr<Convex> convex(std::initializer_list<std::shared_ptr<Surface>> surfaces);
