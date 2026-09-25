@@ -50,21 +50,21 @@ void Glass(int q)
                 pars::samplePerPixel = 100);
             Bitmap bmp = en.eye(opts);
             bmp.cnormalize();
-            bmp.write("output/tube_raytrace_fast.png");
+            bmp.write("output/render_glass_tube_raytrace_fast.png");
         } else if (q == kGOOD) {
             opts.set(pars::width = 1000,
                 pars::high = 1000,
                 pars::samplePerPixel = 1000);
             Bitmap bmp = en.eye(opts);
             bmp.cnormalize();
-            bmp.write("output/tube_raytrace_good.png");
+            bmp.write("output/render_glass_tube_raytrace_good.png");
         } else if (q == kBEST) {
             opts.set(pars::width = 2000,
                 pars::high = 2000,
                 pars::samplePerPixel = 10000);
             Bitmap bmp = en.eye(opts);
             bmp.cnormalize();
-            bmp.write("output/tube_raytrace_best.png");
+            bmp.write("output/render_glass_tube_raytrace_best.png");
         }
 
     }
@@ -88,7 +88,7 @@ void Glass(int q)
             pars::origin = Vec3{ 10,0,3 },
             pars::lookAt = Vec3{ 0,0,2 },
             pars::fieldOfView = 1.2);
-        en.devicesPicture("output/tube_picture.png", opts);
+        en.devicesPicture("output/render_glass_tube_devices.png", opts);
     }
 
 }
@@ -113,21 +113,21 @@ void testBoxSurface(int q) {
                 pars::samplePerPixel = 100);
             Bitmap bmp = en.eye(opts);
             bmp.cnormalize();
-            bmp.write("output/box_raytrace_fast.png");
+            bmp.write("output/render_box_raytrace_fast.png");
         } else if (q == kGOOD) {
             opts.set(pars::width = 200,
                 pars::high = 200,
                 pars::samplePerPixel = 5000);
             Bitmap bmp = en.eye(opts);
             bmp.cnormalize();
-            bmp.write("output/box_raytrace_good.png");
+            bmp.write("output/render_box_raytrace_good.png");
         } else if (q == kBEST) {
             opts.set(pars::width = 2000,
                 pars::high = 2000,
                 pars::samplePerPixel = 10000);
             Bitmap bmp = en.eye(opts);
             bmp.cnormalize();
-            bmp.write("output/box_raytrace_best.png");
+            bmp.write("output/render_box_raytrace_best.png");
         }
 
     }
@@ -140,7 +140,7 @@ void testBoxSurface(int q) {
             pars::origin = Vec3{ 2,0,2 },
             pars::lookAt = Vec3{ 0.5,0,2 },
             pars::fieldOfView = 1.);
-        en.devicesPicture("output/box_picture.png", opts);
+        en.devicesPicture("output/render_box_devices.png", opts);
     }
 
 }
@@ -206,7 +206,7 @@ void testSphere(int q)
             pars::origin = Vec3{ 10,0,2.5 },
             pars::lookAt = Vec3{ 0,0,0 },
             pars::fieldOfView = 1.2);
-        en.devicesPicture("output/shpere_on_floor_picture.png", opts);
+        en.devicesPicture("output/render_spheres_devices.png", opts);
     }
 
     {
@@ -229,7 +229,8 @@ void testSphere(int q)
         }
         Bitmap bmp = en.eye(opts);
         bmp.cnormalize();
-        bmp.write("output/shpere_on_floor_raytrace.png");
+        std::string quality = q == kFAST ? "fast" : q == kGOOD ? "good" : "best";
+        bmp.write("output/render_spheres_raytrace_" + quality + ".png");
 
     }
 }
@@ -282,7 +283,7 @@ void testSphereRefract()
             c.cmul(pow(c.cmax(), 0.5 - 1));
         }
     }
-    bitmap.write("output/testSphereRefract.png");
+    bitmap.write("output/render_sphere_refract.png");
 
 }
 
@@ -313,7 +314,7 @@ void testCone(int) {
         pars::lookAt = Vec3{ 0,0,0 },
         pars::fieldOfView = 1.2);
     auto bmp = en.devicesPicture(opts);
-    bmp.write("output/cone.png");
+    bmp.write("output/render_cone_devices.png");
 
     
 }

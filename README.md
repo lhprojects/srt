@@ -33,14 +33,14 @@ Sparse air
 ![](Examples/reference/sunfail_l2.000000.png)
 
 ## raytracing for ray
-![](Examples/reference/tube_picture.png)
+![](Examples/reference/render_glass_tube_devices.png)
 
 #  camera to light ray tracing for picturing.
 
 ## From left to right: diffusive sphere, silver sphere, galss sphere, metal sphere.
-![](Examples/reference/shpere_on_floor_raytrace.png)
+![](Examples/reference/render_spheres_raytrace_fast.png)
 
 ## depth of view for box
-![](Examples/reference/box_raytrace_good.png)
+![](Examples/reference/render_box_raytrace_good.png)
 
 
