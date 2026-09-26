@@ -4,6 +4,7 @@
 #include "Bound.h"
 #include "Bounds.h"
 #include "Convex.h"
+#include "Polyhedron.h"
 #include "Real.h"
 #include "Vec3.h"
 #include "Plane.h"

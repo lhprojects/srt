@@ -8,45 +8,29 @@ void dispersivePrism(int s)
 
     auto build_triangle = [](){
 
-        auto p1 = planeSurface(
-            pars::origin = Vec3{ 0,0,1 },
-            pars::direction = normalize(Vec3{ 0,1,0.1 }),
-            pars::pictureColor = Color::white(0.1));
+        auto prism = std::make_shared<ConvexPolyhedron>();
+        prism->addFace(Vec3{ 0,0,1 }, normalize(Vec3{ 0,1,0.1 }))
+            .set(pars::pictureColor = Color::white(0.1));
+        prism->addFace(Vec3{ 0,0,1 }, normalize(Vec3{ 0,-1,0.1 }))
+            .set(pars::reflectType = ReflectType::Mirror,
+                pars::pictureColor = Color::white(0.1));
+        prism->addFace(Vec3{ 0,0,-1 }, normalize(Vec3{ 0,0,-1 }))
+            .set(pars::pictureColor = Color::white(0.1));
+        prism->addFace(Vec3{ 1,0,0 }, normalize(Vec3{ 1,0, 0 }))
+            .set(pars::pictureColor = Color::red(0.9));
+        prism->addFace(Vec3{ -1,0,0 }, normalize(Vec3{ -1,0, 0, }))
+            .set(pars::pictureColor = Color::red(0.9));
 
-        auto p2 = planeSurface(
-            pars::origin = Vec3{ 0,0,1 },
-            pars::direction = normalize(Vec3{ 0,-1,0.1 }),
+        // every face
+        prism->set(
+            pars::innerPredefinedSellmeier3 = PredefinedSellmeier3::BK7,
             pars::reflectType = ReflectType::Mirror,
-            pars::pictureColor = Color::white(0.1));
-
-        auto p3 = planeSurface(
-            pars::origin = Vec3{ 0,0,-1 },
-            pars::direction = normalize(Vec3{ 0,0,-1 }),
-            pars::pictureColor = Color::white(0.1));
-
-        auto p4 = planeSurface(
-            pars::origin = Vec3{ 1,0,0 },
-            pars::direction = normalize(Vec3{ 1,0, 0 }),
-            pars::pictureColor = Color::red(0.9));
-
-        auto p5 = planeSurface(
-            pars::origin = Vec3{ -1,0,0 },
-            pars::direction = normalize(Vec3{ -1,0, 0, }),
-            pars::pictureColor = Color::red(0.9));
-
-        std::vector<std::shared_ptr<PlaneSurface>> planes
-            = { p1,p2,p3,p4,p5 };
-        for (auto& s : planes) {
-            s->set(
-                pars::innerPredefinedSellmeier3 = PredefinedSellmeier3::BK7,
-                pars::reflectType = ReflectType::Mirror,
-                pars::innerReflectRatio = 0,
-                pars::outerReflectRatio = 0,
-                pars::in2OutRefractRatio = 1.,
-                pars::out2InRefractRatio = 1.
-            );
-        }
-        return convex({ p1,p2,p3,p4,p5 });
+            pars::innerReflectRatio = 0,
+            pars::outerReflectRatio = 0,
+            pars::in2OutRefractRatio = 1.,
+            pars::out2InRefractRatio = 1.
+        );
+        return prism;
     };
 
     auto tri = build_triangle();

@@ -12,6 +12,7 @@
 #include "Device.h"
 #include "Surfaces.h"
 #include "Convex.h"
+#include "Polyhedron.h"
 #include "Random.h"
 #include "Engine.h"
 #include "Recorder.h"
@@ -89,6 +90,14 @@ namespace srt {
 				static_cast<Convex const*>(dev)->distance(ray,
 					handler.fDistance, handler.fIn2out);
 				break;
+			case Device::Kind::ConvexPolyhedron:
+				static_cast<ConvexPolyhedron const*>(dev)->distance(ray,
+					handler.fDistance, handler.fIn2out);
+				break;
+			case Device::Kind::Polyhedron:
+				static_cast<Polyhedron const*>(dev)->distance(ray,
+					handler.fDistance, handler.fIn2out);
+				break;
 			default:
 				handler.fDistance = kInfity;
 				dev->process(ray, handler);
@@ -146,6 +155,12 @@ namespace srt {
 				break;
 			case Device::Kind::Convex:
 				static_cast<Convex const*>(smin_dev)->Convex::process(ray, handler);
+				break;
+			case Device::Kind::ConvexPolyhedron:
+				static_cast<ConvexPolyhedron const*>(smin_dev)->ConvexPolyhedron::process(ray, handler);
+				break;
+			case Device::Kind::Polyhedron:
+				static_cast<Polyhedron const*>(smin_dev)->Polyhedron::process(ray, handler);
 				break;
 			default:
 				smin_dev->process(ray, handler);

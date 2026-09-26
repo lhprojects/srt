@@ -115,6 +115,8 @@ namespace srt {
 			Plane,		// PlaneSurface
 			Quadric,	// QuadricSurface
 			Convex,		// Convex
+			ConvexPolyhedron,	// ConvexPolyhedron
+			Polyhedron,	// Polyhedron
 		};
 		Kind fKind = Kind::Other;
 	private:

@@ -24,22 +24,19 @@ int const kBEST = 2;
 
 
 // width=height=depth=1
-inline std::shared_ptr<Surface> boxSurface() {
-    auto cc = convex({});
+inline std::shared_ptr<ConvexPolyhedron> boxSurface() {
+    auto box = std::make_shared<ConvexPolyhedron>();
     for (Real i = -1; i <= 1; ++i) {
         for (Real j = -1; j <= 1; ++j) {
             for (Real k = -1; k <= 1; ++k) {
                 if (fabs(i) + fabs(j) + fabs(k) == 1) {
-                    auto s1 = planeSurface(
-                        pars::origin = Vec3{ 0.5 * i, 0.5 * j, 1. + 0.5 * k },
-                        pars::direction = Vec3{ i,j, k },
-                        pars::pictureColor = Color::white(1.));
-                    cc->addSurface(s1);
+                    box->addFace(Vec3{ 0.5 * i, 0.5 * j, 1. + 0.5 * k },
+                        Vec3{ i,j, k }).set(pars::pictureColor = Color::white(1.));
                 }
             }
         }
     }
-    return cc;
+    return box;
 }
 
 inline void addRoom(Engine &en)
