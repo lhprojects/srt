@@ -42,6 +42,7 @@ namespace srt {
 		{
 			fType = TextureType::Function;
 			fTextureInterface = std::move(r);
+			fDependsOnWavelength = fTextureInterface->dependsOnWavelength();
 			fRatio = 0;
 		}
 
@@ -49,6 +50,7 @@ namespace srt {
 		{
 			fType = TextureType::Homogenous;
 			fTextureInterface = nullptr;
+			fDependsOnWavelength = false;
 			fRatio = r;
 		}
 
@@ -67,8 +69,7 @@ namespace srt {
 		}
 		bool dependsOnWavelength() const
 		{
-			return fType == TextureType::Function
-				&& fTextureInterface->dependsOnWavelength();
+			return fDependsOnWavelength;
 		}
 
 		// only for a texture that dependsOnWavelength()
@@ -81,6 +82,8 @@ namespace srt {
 		TextureType fType = TextureType::Homogenous;
 		std::shared_ptr<TextureInterface> fTextureInterface;
 		Real fRatio;
+		// asked once in setFunction, so hits need no virtual call
+		bool fDependsOnWavelength = false;
 	};
 
 }
