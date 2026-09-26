@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <assert.h>
 #include <math.h>
+#include <cmath>
 //#define SRT_CPPSTD
 
 #ifdef SRT_CPPSTD
@@ -159,8 +160,13 @@ namespace srt {
             y = uniform(-1, 1);
             r2 = x * x + y * y;
         } while (r2 > 1);
-        Vec3 n1 = getNorm(N);
-        Vec3 n2 = cross(n1, N);
+        // orthonormal basis around N without branches or sqrt
+        // (Duff et al., Building an Orthonormal Basis, Revisited, 2017)
+        Real sign = std::copysign(Real(1), N.fZ);
+        Real a = -1 / (sign + N.fZ);
+        Real b = N.fX * N.fY * a;
+        Vec3 n1 = { 1 + sign * N.fX * N.fX * a, sign * b, -sign * N.fX };
+        Vec3 n2 = { b, sign + N.fY * N.fY * a, -N.fY };
         return x * n1 + y * n2 + sqrt(1 - r2) * N;
     }
 
