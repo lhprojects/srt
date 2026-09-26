@@ -4,7 +4,6 @@
 #include <assert.h>
 #include <math.h>
 #include <cmath>
-//#define SRT_CPPSTD
 
 #ifdef SRT_CPPSTD
 #include <random>
@@ -26,81 +25,31 @@ namespace srt {
         return s & 0xa4b097a27e0f4d;
     }
 
-    thread_local uint64_t gDefaultRndEngine = realRandomSeed((uint32_t)(uint64_t)&gDefaultRndEngine);
-
-    static uint64_t xorshift64(uint64_t& a)
+    uint64_t randomSeedThisThread()
     {
-        uint64_t x = a;
-        x ^= x << 13;
-        x ^= x >> 7;
-        x ^= x << 17;
-        return a = x;
+        return gRandomState = realRandomSeed((uint32_t)(uint64_t)&gRandomState);
     }
 
     void setRandomSeed(uint32_t s)
     {
-        gDefaultRndEngine = realRandomSeed(s);
+        gRandomState = realRandomSeed(s);
     }
 
 #endif
 
-    static double asDouble(uint64_t v)
-    {
-        return ((uint64_t)(v >> 11)) / (double)(uint64_t(1) << 53);
-    }
-
-    Real uniformUnitary() {
 #ifdef SRT_CPPSTD
+    Real uniformUnitary() {
         std::uniform_real_distribution<Real> ur(0, 1);
         return ur(gDefaultRndEngine);
-#else
-        uint64_t x = xorshift64(gDefaultRndEngine);
-        double d = asDouble(x);
-        return d;
-#endif
-
     }
 
     // uniform random number in rnage [a,b]
     Real uniform(Real a, Real b)
     {
-#ifdef SRT_CPPSTD
         std::uniform_real_distribution<Real> ur(a, b);
         return ur(gDefaultRndEngine);
-#else
-        uint64_t x = xorshift64(gDefaultRndEngine);
-        double d = asDouble(x);
-        return d * (b - a) + a;
-#endif
     }
-
-
-    void randomSinCos(Real & sinphi,
-        Real &cosphi) {
-#if 0
-        Real phi = uniform(0, 2 * kPi);
-        sinphi = sin(phi);
-        cosphi = cos(phi);
-#else
-        Real sin2phi;
-        Real cos2phi;
-
-        for (;;) {
-            Real x = uniform(-1, 1);
-            Real y = uniform(-1, 1);
-            Real r2 = x * x + y * y;
-            if (r2 <= 1) {
-                Real r2i = 1 / r2;
-                sin2phi = 2. * x * y * r2i;
-                cos2phi = (x * x - y * y) * r2i;
-                break;
-            }
-        }
-        sinphi = sin2phi;
-        cosphi = cos2phi;
 #endif
-
-    }
 
     Vec3 randomNorm(Vec3 const& d)
     {
@@ -147,27 +96,6 @@ namespace srt {
 
         Vec3 d = ss * randomNorm(N) + cs * N;
         return d;
-    }
-
-    // halfAngle = gPi/2
-    Vec3 randomDiffuseRay(Vec3 const& N)
-    {
-        // Malley's method: a point uniform on the unit disk, lifted onto
-        // the hemisphere, is cosine distributed
-        Real x, y, r2;
-        do {
-            x = uniform(-1, 1);
-            y = uniform(-1, 1);
-            r2 = x * x + y * y;
-        } while (r2 > 1);
-        // orthonormal basis around N without branches or sqrt
-        // (Duff et al., Building an Orthonormal Basis, Revisited, 2017)
-        Real sign = std::copysign(Real(1), N.fZ);
-        Real a = -1 / (sign + N.fZ);
-        Real b = N.fX * N.fY * a;
-        Vec3 n1 = { 1 + sign * N.fX * N.fX * a, sign * b, -sign * N.fX };
-        Vec3 n2 = { b, sign + N.fY * N.fY * a, -N.fY };
-        return x * n1 + y * n2 + sqrt(1 - r2) * N;
     }
 
     Vec3 randomMetalRay(Vec3 const& rayD,

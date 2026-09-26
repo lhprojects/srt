@@ -32,6 +32,7 @@ namespace srt {
 		enum class TextureType {
 			Homogenous,
 			Function,
+			Grid,	// squares of side fW alternating between ratio 1 and 0.5
 		};
 
 		Texture(Real r) : fRatio(r)
@@ -43,6 +44,18 @@ namespace srt {
 			fType = TextureType::Function;
 			fTextureInterface = std::move(r);
 			fDependsOnWavelength = fTextureInterface->dependsOnWavelength();
+			fRatio = 0;
+		}
+
+		// a grid on the plane with normal n
+		void setGrid(Vec3 const& n, Real w)
+		{
+			fType = TextureType::Grid;
+			fTextureInterface = nullptr;
+			fDependsOnWavelength = false;
+			fN1 = getNorm(normalize(n));
+			fN2 = cross(normalize(n), fN1);
+			fW = w;
 			fRatio = 0;
 		}
 
@@ -59,6 +72,12 @@ namespace srt {
 		{
 			if (fType == TextureType::Homogenous) {
 				return fRatio;
+			}
+			else if (fType == TextureType::Grid) {
+				int a1 = (int)floor(dot(pos, fN1) / fW);
+				int a2 = (int)floor(dot(pos, fN2) / fW);
+				bool dark = (a1 & 1) ^ (a2 & 1);
+				return dark ? 0.5 : 1;
 			}
 			else if (fType == TextureType::Function) {
 				return fTextureInterface->ratio(pos, lambda);
@@ -84,6 +103,9 @@ namespace srt {
 		Real fRatio;
 		// asked once in setFunction, so hits need no virtual call
 		bool fDependsOnWavelength = false;
+		// for Grid
+		Vec3 fN1, fN2;
+		Real fW = 1;
 	};
 
 }

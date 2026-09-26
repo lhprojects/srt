@@ -107,6 +107,16 @@ namespace srt {
 			Tracing,
 		};
 		WavelengthUse fWavelength = WavelengthUse::None;
+
+		// which kind of device this is, so that the nearest-hit search can call
+		// the common ones without a virtual call (and inline them)
+		enum class Kind {
+			Other,
+			Plane,		// PlaneSurface
+			Quadric,	// QuadricSurface
+			Convex,		// Convex
+		};
+		Kind fKind = Kind::Other;
 	private:
 		// not used
 		std::string fName;

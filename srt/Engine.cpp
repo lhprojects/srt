@@ -10,6 +10,8 @@
 
 #include "Pars.h"
 #include "Device.h"
+#include "Surfaces.h"
+#include "Convex.h"
 #include "Random.h"
 #include "Engine.h"
 #include "Recorder.h"
@@ -74,8 +76,23 @@ namespace srt {
 		for (size_t dev_idx = 0; dev_idx < ndev; ++dev_idx) {
 			Device* dev = devp[dev_idx];
 
-			handler.fDistance = kInfity;
-			dev->process(ray, handler);
+			switch (dev->fKind) {
+			case Device::Kind::Plane:
+				static_cast<PlaneSurface const*>(dev)->distance(ray,
+					handler.fDistance, handler.fIn2out);
+				break;
+			case Device::Kind::Quadric:
+				static_cast<QuadricSurface const*>(dev)->distance(ray,
+					handler.fDistance, handler.fIn2out);
+				break;
+			case Device::Kind::Convex:
+				static_cast<Convex const*>(dev)->distance(ray,
+					handler.fDistance, handler.fIn2out);
+				break;
+			default:
+				handler.fDistance = kInfity;
+				dev->process(ray, handler);
+			}
 			Real s = handler.fDistance;
 
 			if (!std::isinf(s)) {
@@ -120,7 +137,19 @@ namespace srt {
 			if (ray.fLambda == 0 && smin_dev->dependsOnWavelength()) {
 				drawWavelength(ray);
 			}
-			smin_dev->process(ray, handler);
+			switch (smin_dev->fKind) {
+			case Device::Kind::Plane:
+				static_cast<PlaneSurface const*>(smin_dev)->PlaneSurface::process(ray, handler);
+				break;
+			case Device::Kind::Quadric:
+				static_cast<QuadricSurface const*>(smin_dev)->QuadricSurface::process(ray, handler);
+				break;
+			case Device::Kind::Convex:
+				static_cast<Convex const*>(smin_dev)->Convex::process(ray, handler);
+				break;
+			default:
+				smin_dev->process(ray, handler);
+			}
 			return true;
 		} else {
 			return false;

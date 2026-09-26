@@ -9,38 +9,6 @@
 
 namespace srt {
 	
-	struct BoxBound : Bound
-	{
-
-		BoxBound(Real x0, Real x1, Real y0, Real y1, Real z0, Real z1)
-		{
-			fX0 = x0;
-			fX1 = x1;
-			fY0 = y0;
-			fY1 = y1;
-			fZ0 = z0;
-			fZ1 = z1;
-		}
-
-		Real fX0 = -kInfity;
-		Real fX1 = +kInfity;
-		Real fY0 = -kInfity;
-		Real fY1 = +kInfity;
-		Real fZ0 = -kInfity;
-		Real fZ1 = +kInfity;
-
-		void setXBound(Real x0, Real x1) { fX0 = x0; fX1 = x1; }
-		void setYBound(Real x0, Real x1) { fY0 = x0; fY1 = x1; }
-		void setZBound(Real x0, Real x1) { fZ0 = x0; fZ1 = x1; }
-
-		virtual bool onInBound(Vec3 const& p) const
-		{
-			return p.fX > fX0 && p.fX < fX1&&
-				p.fY > fY0 && p.fY < fY1&&
-				p.fZ > fZ0 && p.fZ < fZ1;
-		}
-	};
-
 	inline std::shared_ptr<Bound> boxBound(Real x0, Real x1, Real y0, Real y1, Real z0, Real z1)
 	{
 		return std::make_shared<BoxBound>(x0, x1, y0, y1, z0, z1);
@@ -152,4 +120,4 @@ namespace srt {
 	};
 	std::shared_ptr<Bound> asBound(std::shared_ptr<Surface> s);
 
-}
+}

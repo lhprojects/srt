@@ -141,6 +141,9 @@ namespace srt {
 
 	QuadricScreen::QuadricScreen() : QuadricSurface()
 	{
+		// process() also records the ray: keep it off the fast path of the
+		// nearest-hit search (Device::fKind)
+		fKind = Kind::Other;
 	}
 
 	void QuadricScreen::process(Ray const& in, ProcessHandler& handler) const

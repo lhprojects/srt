@@ -125,12 +125,15 @@ namespace srt {
 
 	struct PlaneScreen : PlaneSurface, Screen
 	{
-		PlaneScreen() = default;
+		// process() also records the ray: keep it off the fast path of the
+		// nearest-hit search (Device::fKind)
+		PlaneScreen() { fKind = Kind::Other; }
 
 		static constexpr auto pars_ = PlaneSurface::pars_ | Screen::pars_;
 
 		PlaneScreen(pars::argument auto const &... args)
 		{
+			fKind = Kind::Other;
 			pars::check(pars_, args...);
 			// by default screen is non-refractive and non-reflective
 			set(pars::uncheck, pars::in2OutRefractRatio = 0);
@@ -142,6 +145,7 @@ namespace srt {
 
 		PlaneScreen(pars::uncheck_t, pars::argument auto const &... args)
 		{
+			fKind = Kind::Other;
 			// by default screen is non-refractive and non-reflective
 			set(pars::uncheck, pars::in2OutRefractRatio = 0);
 			set(pars::uncheck, pars::out2InRefractRatio = 0);
@@ -183,6 +187,7 @@ namespace srt {
 		template<class... Args>
 		QuadricScreen(Args const &... args)
 		{
+			fKind = Kind::Other;
 			set(args...);
 		}
 
