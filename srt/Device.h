@@ -91,6 +91,22 @@ namespace srt {
 		}
 
 		virtual void process(Ray const& in, ProcessHandler& handler) const = 0;
+
+		bool dependsOnWavelength() const
+		{
+			return fWavelength == WavelengthUse::Tracing;
+		}
+
+		// what process() does with the ray's wavelength
+		enum class WavelengthUse {
+			// nothing
+			None,
+			// reads it with a TracingHandler: such a device only gets rays with
+			// fLambda != 0 (see Ray::fLambda); its distance pass must not
+			// depend on the wavelength
+			Tracing,
+		};
+		WavelengthUse fWavelength = WavelengthUse::None;
 	private:
 		// not used
 		std::string fName;

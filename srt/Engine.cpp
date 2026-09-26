@@ -96,12 +96,26 @@ namespace srt {
 		return smin_dev;
 	}
 
+	// for a ray carrying a spectrum (fLambda == 0) that reaches something which
+	// needs a wavelength: from here on the ray follows one wavelength, drawn
+	// uniformly and weighted by the spectrum
+	static void drawWavelength(Ray& ray)
+	{
+		Real t = uniform(-1, 1);
+		ray.fLambda = kSpecCenter + kSpecHalfWidth * t;
+		ray.fAmp *= exp(specPoly(ray.fC, t));
+		for (auto& c : ray.fC) c = 0;
+	}
+
 	static bool emitRay(std::vector<Device*>& devs,
-		Ray const& ray,
+		Ray& ray,
 		ProcessHandler& handler) {
 		Real smin = kInfity;
 		Device* smin_dev = minSDevice(devs, ray, smin);
 		if (smin_dev) {
+			if (ray.fLambda == 0 && smin_dev->dependsOnWavelength()) {
+				drawWavelength(ray);
+			}
 			smin_dev->process(ray, handler);
 			return true;
 		} else {
@@ -643,15 +657,11 @@ namespace srt {
 					continue;
 				}
 
-				// a dispersive surface splits the spectrum: from here on the ray
-				// follows one wavelength, drawn uniformly and weighted by the spectrum
+				// a dispersive surface splits the spectrum
 				SurfaceProperties const* sp = handler.property;
 				if (ray.fLambda == 0 && (sp->fIndexInner.dependsOnWavelength()
 					|| sp->fIndexOuter.dependsOnWavelength())) {
-					Real t = uniform(-1, 1);
-					ray.fLambda = kSpecCenter + kSpecHalfWidth * t;
-					ray.fAmp *= exp(specPoly(ray.fC, t));
-					for (auto& c : ray.fC) c = 0;
+					drawWavelength(ray);
 				}
 
 				ProcessReflection processReflection(*this,

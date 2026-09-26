@@ -28,6 +28,8 @@ void blueSky(int q)
         Atmosphere()
         {
             setName("air");
+            // the scattering length goes with the wavelength
+            fWavelength = WavelengthUse::Tracing;
             atmosphereTop = quadricSurface(
                 pars::name = "atmoTop",
                 pars::shape = ShapeType::Shpere,
