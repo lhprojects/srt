@@ -100,6 +100,11 @@ namespace srt
 			fFunction = index;
 		}
 
+		bool dependsOnWavelength() const
+		{
+			return fType != RefractiveIndexType::Const;
+		}
+
 		Real get(Real lambda) const
 		{
 			if (fType == RefractiveIndexType::Const) {

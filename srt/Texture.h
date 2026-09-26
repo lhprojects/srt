@@ -3,11 +3,19 @@
 #include <memory>
 #include "Real.h"
 #include "Vec3.h"
+#include "wavelength.h"
 
 namespace srt {
 
 	struct TextureInterface {
 		virtual Real ratio(Vec3 const& pos, Real lambda) = 0;
+
+		// whether ratio() changes with lambda
+		virtual bool dependsOnWavelength() const { return true; }
+
+		// ln ratio(pos, lambda) as c0 + c1 t + ... + c4 t^4 (see kSpecCenter);
+		// by default the quartic through ln ratio at t = -1, -1/2, 0, 1/2, 1
+		virtual void logPoly(Vec3 const& pos, Real* c);
 	};
 
 	std::shared_ptr<TextureInterface> gaussSpectrum(Real reflect,
@@ -57,6 +65,18 @@ namespace srt {
 				throw "";
 			}
 		}
+		bool dependsOnWavelength() const
+		{
+			return fType == TextureType::Function
+				&& fTextureInterface->dependsOnWavelength();
+		}
+
+		// only for a texture that dependsOnWavelength()
+		void logPoly(Vec3 const& pos, Real* c) const
+		{
+			fTextureInterface->logPoly(pos, c);
+		}
+
 	private:
 		TextureType fType = TextureType::Homogenous;
 		std::shared_ptr<TextureInterface> fTextureInterface;

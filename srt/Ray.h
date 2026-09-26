@@ -3,6 +3,7 @@
 
 #include "Real.h"
 #include "Vec3.h"
+#include "wavelength.h"
 #include <stdint.h>
 
 
@@ -23,7 +24,11 @@ namespace srt {
 		Vec3 fP;
 
 		Real fAmp;
+		// wavelength; 0 means the ray carries the spectrum
+		// exp(fC[0] + fC[1] t + ... + fC[4] t^4) (see kSpecCenter in wavelength.h)
+		// instead, and a wavelength is drawn only when a surface needs one
 		Real fLambda;
+		Real fC[kSpecTerms] = {};
 
 		int64_t fID;
 	};
@@ -38,6 +43,7 @@ namespace srt {
 		fD = d;
 		fAmp = amp;
 		fLambda = r.fLambda;
+		for (int k = 0; k < kSpecTerms; ++k) fC[k] = r.fC[k];
 		fID = r.fID;
 		fP = r.fP;
 	}

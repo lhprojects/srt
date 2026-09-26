@@ -14,6 +14,8 @@ namespace srt {
 		Vec3 n1;
 		Vec3 n2;
 		Real w;
+
+		bool dependsOnWavelength() const override { return false; }
 		Real ratio(Vec3 const& pos, Real lambda) override
 		{
 			Real x1 = dot(pos, n1);

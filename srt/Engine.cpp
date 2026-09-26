@@ -177,12 +177,55 @@ namespace srt {
 		int level;
 	};
 
+	// RGB of what a ray of unit amplitude carries: its wavelength, or when that
+	// is 0, the mean over [LEN_MIN, LEN_MAX] of RGB(lambda) times its spectrum
+	// exp(c0 + c1 t + ... + c4 t^4) (64-point midpoint rule)
+	static void rayColor(Ray const& ray, Real* rgb)
+	{
+		if (ray.fLambda != 0) {
+			WaveLength2RGB(ray.fLambda, &rgb[0], &rgb[1], &rgb[2]);
+			return;
+		}
+
+		constexpr int n = 64;
+		struct Table {
+			Real t[n];
+			Real rgb[n][3];
+			Real white[3] = { 0, 0, 0 };
+			Table() {
+				for (int i = 0; i < n; ++i) {
+					t[i] = -1 + (i + 0.5) * 2. / n;
+					WaveLength2RGB(kSpecCenter + kSpecHalfWidth * t[i],
+						&rgb[i][0], &rgb[i][1], &rgb[i][2]);
+					for (int k = 0; k < 3; ++k) {
+						rgb[i][k] /= n;
+						white[k] += rgb[i][k];
+					}
+				}
+			}
+		};
+		static Table const tab;
+
+		Real const* c = ray.fC;
+		if (c[1] == 0 && c[2] == 0 && c[3] == 0 && c[4] == 0) {
+			Real e = exp(c[0]);
+			for (int k = 0; k < 3; ++k) rgb[k] = e * tab.white[k];
+			return;
+		}
+		for (int k = 0; k < 3; ++k) rgb[k] = 0;
+		for (int i = 0; i < n; ++i) {
+			Real t = tab.t[i];
+			Real e = exp(specPoly(c, t));
+			for (int k = 0; k < 3; ++k) rgb[k] += e * tab.rgb[i][k];
+		}
+	}
+
 	struct RayTracing {
 		std::vector<Frame> frames;
 
 		TraceOpts opts;
 		TracingHandler handler;
-		Real pixelAmp;
+		Real pixelRGB[3];
 		std::vector<Device*>& devs;
 
 		void init_recorder(std::vector<Recorder*> const& recorders) {
@@ -219,6 +262,25 @@ namespace srt {
 		int the_level;
 		bool die = true;
 
+		// added to the spectrum of the reflected / transmitted ray
+		Real rC[kSpecTerms] = {};
+		Real tC[kSpecTerms] = {};
+
+		// for a ray carrying a spectrum (fLambda == 0) and a ratio that
+		// depends on the wavelength: the ratio is exp(C); v becomes its max
+		// over [LEN_MIN, LEN_MAX] (sampled on 33 points) and C what is left, so
+		// that v * exp(C) is the ratio; any v <= 1 would keep the result
+		// unbiased, the max keeps exp(C) about <= 1
+		void spectralRatio(Texture const& tex, Real& v, Real* C) {
+			tex.logPoly(inter, C);
+			Real M = specPoly(C, -1);
+			for (int i = 1; i <= 32; ++i) {
+				M = std::max(M, specPoly(C, -1 + i / 16.));
+			}
+			v = exp(M);
+			C[0] -= M;
+		}
+
 		ProcessReflection(RayTracing& rt,
 			Ray const& ray,
 			int the_level) :
@@ -239,6 +301,7 @@ namespace srt {
 			Vec3 const& p) {
 			Vec3 rd = reflectDirection(N, ray.fD);
 			Ray newRay(inter, rd, reflect * ray.fAmp, ray);
+			for (int k = 0; k < kSpecTerms; ++k) newRay.fC[k] += rC[k];
 			newRay.fP = p;
 			this->newRay(newRay, Event::Reflect);
 		}
@@ -249,6 +312,7 @@ namespace srt {
 			if (transDirection(N, ray.fD,
 				fromIndex, toIndex, td)) {
 				Ray newRay(inter, td, trans * ray.fAmp, ray);
+			for (int k = 0; k < kSpecTerms; ++k) newRay.fC[k] += tC[k];
 				newRay.fP = p;
 				this->newRay(newRay, Event::Refract);
 			}
@@ -257,6 +321,7 @@ namespace srt {
 		void doMirrorReflect(Real reflect) {
 			Vec3 rd = reflectDirection(N, ray.fD);
 			Ray newRay(inter, rd, reflect * ray.fAmp, ray);
+			for (int k = 0; k < kSpecTerms; ++k) newRay.fC[k] += rC[k];
 			newRay.fP = Vec3{}; // unset: drawn when a surface needs it
 			this->newRay(newRay, Event::Reflect);
 		}
@@ -266,6 +331,7 @@ namespace srt {
 			if (transDirection(N, ray.fD,
 				fromIndex, toIndex, td)) {
 				Ray newRay(inter, td, trans * ray.fAmp, ray);
+			for (int k = 0; k < kSpecTerms; ++k) newRay.fC[k] += tC[k];
 				newRay.fP = Vec3{}; // unset: drawn when a surface needs it
 				this->newRay(newRay, Event::Refract);
 			}
@@ -274,6 +340,7 @@ namespace srt {
 		void doDiffuseReflect(Real reflect) {
 			Vec3 rd = randomDiffuseRay(N);
 			Ray newRay(inter, rd, reflect * ray.fAmp, ray);
+			for (int k = 0; k < kSpecTerms; ++k) newRay.fC[k] += rC[k];
 			newRay.fP = Vec3{}; // unset: drawn when a surface needs it
 			this->newRay(newRay, Event::Reflect);
 		};
@@ -281,6 +348,7 @@ namespace srt {
 		void doDiffuseTrans(Real trans) {
 			Vec3 rd = randomDiffuseRay(-N);
 			Ray newRay(inter, rd, trans * ray.fAmp, ray);
+			for (int k = 0; k < kSpecTerms; ++k) newRay.fC[k] += tC[k];
 			newRay.fP = Vec3{}; // unset: drawn when a surface needs it
 			this->newRay(newRay, Event::Refract);
 		};
@@ -288,6 +356,7 @@ namespace srt {
 		void doExpReflect(Real reflect) {
 			Vec3 rd = randomMetalRay(ray.fD, N, 0.15);
 			Ray newRay(inter, rd, reflect * ray.fAmp, ray);
+			for (int k = 0; k < kSpecTerms; ++k) newRay.fC[k] += rC[k];
 			newRay.fP = Vec3{}; // unset: drawn when a surface needs it
 			this->newRay(newRay, Event::Reflect);
 		};
@@ -298,6 +367,7 @@ namespace srt {
 				fromIndex, toIndex, td)) {
 				Vec3 rd = randomMetalRay(td, -N, 0.15);
 				Ray newRay(inter, rd, trans * ray.fAmp, ray);
+			for (int k = 0; k < kSpecTerms; ++k) newRay.fC[k] += tC[k];
 				newRay.fP = Vec3{}; // unset: drawn when a surface needs it
 				this->newRay(newRay, Event::Refract);
 			}
@@ -337,6 +407,7 @@ namespace srt {
 		void doRayleighReflect(Real reflect) {
 			Vec3 rd = randomRayleigh(ray.fD);
 			Ray newRay(inter, rd, reflect * ray.fAmp, ray);
+			for (int k = 0; k < kSpecTerms; ++k) newRay.fC[k] += rC[k];
 			newRay.fP = Vec3{}; // unset: drawn when a surface needs it
 			this->newRay(newRay, Event::Reflect);
 		}
@@ -359,6 +430,12 @@ namespace srt {
 				if (reflectType != ReflectType::Optical) {
 					reflect = sp->fIn2OutReflect.ratio(inter, lambda);
 					refract = sp->fIn2OutTrans.ratio(inter, lambda);
+					if (lambda == 0) {
+						if (sp->fIn2OutReflect.dependsOnWavelength())
+							spectralRatio(sp->fIn2OutReflect, reflect, rC);
+						if (sp->fIn2OutTrans.dependsOnWavelength())
+							spectralRatio(sp->fIn2OutTrans, refract, tC);
+					}
 				}
 			} else {
 				N = handler.N;
@@ -368,6 +445,12 @@ namespace srt {
 				if (reflectType != ReflectType::Optical) {
 					reflect = sp->fOut2InReflect.ratio(inter, lambda);
 					refract = sp->fOut2InTrans.ratio(inter, lambda);
+					if (lambda == 0) {
+						if (sp->fOut2InReflect.dependsOnWavelength())
+							spectralRatio(sp->fOut2InReflect, reflect, rC);
+						if (sp->fOut2InTrans.dependsOnWavelength())
+							spectralRatio(sp->fOut2InTrans, refract, tC);
+					}
 				}
 			}
 
@@ -524,13 +607,17 @@ namespace srt {
 
 			Real amp_ = sp->fBrightness;
 			if (amp_) {
-				rt.pixelAmp += amp_ * ray.fAmp;
+				Real rgb[3];
+				rayColor(ray, rgb);
+				for (int k = 0; k < 3; ++k) {
+					rt.pixelRGB[k] += amp_ * ray.fAmp * rgb[k];
+				}
 			}
 		}
 	};
 
 	void RayTracing::traceRay(Ray const& ray) {
-		pixelAmp = 0.;
+		pixelRGB[0] = pixelRGB[1] = pixelRGB[2] = 0;
 		frames.emplace_back(ray, 0);
 		if (recorder)
 			recorder(Event::Generate, ray, 0, handler);
@@ -540,7 +627,7 @@ namespace srt {
 			Frame frame = frames.back();
 			frames.pop_back();
 
-			Ray const& ray = frame.ray;
+			Ray& ray = frame.ray;
 			int ray_level = frame.level;
 
 			if (!(ray_level <= opts.max_level && ray.fAmp >= opts.min_ray_amp)) {
@@ -554,6 +641,17 @@ namespace srt {
 					if (recorder)
 						recorder(Event::Escape, ray, ray_level + 1, handler);
 					continue;
+				}
+
+				// a dispersive surface splits the spectrum: from here on the ray
+				// follows one wavelength, drawn uniformly and weighted by the spectrum
+				SurfaceProperties const* sp = handler.property;
+				if (ray.fLambda == 0 && (sp->fIndexInner.dependsOnWavelength()
+					|| sp->fIndexOuter.dependsOnWavelength())) {
+					Real t = uniform(-1, 1);
+					ray.fLambda = kSpecCenter + kSpecHalfWidth * t;
+					ray.fAmp *= exp(specPoly(ray.fC, t));
+					for (auto& c : ray.fC) c = 0;
 				}
 
 				ProcessReflection processReflection(*this,
@@ -1000,13 +1098,14 @@ namespace srt {
 					ray.fD = rayD;
 					ray.fP = Vec3{}; // unset: drawn when a surface needs it
 					ray.fO = pc;
-					ray.fLambda = uniform(LEN_MIN, LEN_MAX);
+					ray.fLambda = 0; // white: the spectrum exp(0)
+					for (auto& c : ray.fC) c = 0;
 
 					rt.traceRay(ray);
 
-					Color c = Color::black(0.);
-					WaveLength2RGB(ray.fLambda, &c.R(), &c.G(), &c.B());
-					total += c * rt.pixelAmp;
+					total.R() += rt.pixelRGB[0];
+					total.G() += rt.pixelRGB[1];
+					total.B() += rt.pixelRGB[2];
 				}
 				if (PPP > 0) {
 					total.cmul(1. / PPP);
