@@ -151,12 +151,17 @@ namespace srt {
     // halfAngle = gPi/2
     Vec3 randomDiffuseRay(Vec3 const& N)
     {
-        Real cdf = uniform(0, 1);
-        Real cs = sqrt(1 - cdf);
-        Real ss = sqrt(cdf);
-
-        Vec3 d = ss * randomNorm(N) + cs * N;
-        return d;
+        // Malley's method: a point uniform on the unit disk, lifted onto
+        // the hemisphere, is cosine distributed
+        Real x, y, r2;
+        do {
+            x = uniform(-1, 1);
+            y = uniform(-1, 1);
+            r2 = x * x + y * y;
+        } while (r2 > 1);
+        Vec3 n1 = getNorm(N);
+        Vec3 n2 = cross(n1, N);
+        return x * n1 + y * n2 + sqrt(1 - r2) * N;
     }
 
     Vec3 randomMetalRay(Vec3 const& rayD,

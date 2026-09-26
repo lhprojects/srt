@@ -998,7 +998,7 @@ namespace srt {
 
 
 					ray.fD = rayD;
-					ray.fP = randomNorm(rayD);
+					ray.fP = Vec3{}; // unset: drawn when a surface needs it
 					ray.fO = pc;
 					ray.fLambda = uniform(LEN_MIN, LEN_MAX);
 
