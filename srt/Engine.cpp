@@ -67,8 +67,12 @@ namespace srt {
 
 		DistanceHandler handler;
 
-		for (size_t dev_idx = 0; dev_idx < devs.size(); ++dev_idx) {
-			Device* dev = devs[dev_idx];
+		// read once: the calls below could, as far as the compiler knows,
+		// change the vector
+		Device* const* devp = devs.data();
+		size_t const ndev = devs.size();
+		for (size_t dev_idx = 0; dev_idx < ndev; ++dev_idx) {
+			Device* dev = devp[dev_idx];
 
 			handler.fDistance = kInfity;
 			dev->process(ray, handler);
