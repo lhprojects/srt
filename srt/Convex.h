@@ -12,16 +12,11 @@ namespace srt {
 
 		void addSurface(std::shared_ptr<Surface> surf);
 		bool isInner(Vec3 const& p) const override;
-		void process(Ray const& ray,
-			ProcessHandler& handler) const override;
-
-		// the distance pass of process(): s = kInfity on a miss
-		inline void distance(Ray const& ray, Real& s, bool& in2out) const;
+		// the hit is on one of the faces, which shades it (Hit::sub)
+		bool intersect(Ray const& ray, Real tMax, Hit& hit) const override;
+		void shade(Ray const& ray, Hit const& hit, TracingHandler& out) const override;
 
 	private:
-		// distance() for a body not made of unbounded planes only
-		void distanceGeneral(Ray const& ray, Real& s, bool& in2out) const;
-
 		std::vector<std::shared_ptr<Surface>> fSurfaces;
 		// the faces as planes, filled only while every face is a PlaneSurface
 		std::vector<struct PlaneSurface const*> fPlanes;
@@ -86,23 +81,6 @@ namespace srt {
 			return exitFace;
 		}
 		return nullptr;
-	}
-
-	inline void Convex::distance(Ray const& ray, Real& s, bool& in2out) const
-	{
-		if (fAllPlanes) {
-			bool done;
-			PlaneSurface const* face = minsPlane(ray, fPlanes, done);
-			if (done) {
-				if (face) {
-					face->distance(ray, s, in2out);
-				} else {
-					s = kInfity;
-				}
-				return;
-			}
-		}
-		distanceGeneral(ray, s, in2out);
 	}
 
 }

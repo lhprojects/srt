@@ -78,8 +78,10 @@ namespace srt {
 		Real distance(Vec3 o, Vec3 d, Real len,
 			Ray const& ray, Vec3& n) const;
 
-		void process(Ray const& ray, ProcessHandler& handler) const override;
+		bool intersect(Ray const& ray, Real tMax, Hit& hit) const override;
+		void shade(Ray const& ray, Hit const& hit, TracingHandler& out) const override;
 	private:
+		Real nearest(Ray const& ray, Vec3& N) const;
 
 		Real fPictrueRadius = 0.01;
 

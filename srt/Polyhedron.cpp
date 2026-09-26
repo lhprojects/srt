@@ -16,19 +16,6 @@ namespace srt {
 		fOut2InReflect.setGrid(N, w);
 	}
 
-	void PolyhedronBase::report(Ray const& ray, int i, Real s,
-		ProcessHandler& handler) const
-	{
-		PolyhedronFace const& f = fFaces[i];
-		bool in2out = dot(f.N, ray.fD) > 0;
-		if (handler.fType == HandlerType::Distance) {
-			static_cast<DistanceHandler&>(handler).distance(s, in2out);
-		} else if (handler.fType == HandlerType::Tracing) {
-			static_cast<TracingHandler&>(handler).hitSurface(
-				ray.fO + ray.fD * s, f.N, in2out, &f, this);
-		}
-	}
-
 	// ---- ConvexPolyhedron
 
 	PolyhedronFace& ConvexPolyhedron::addFace(Vec3 const& origin,
@@ -43,16 +30,6 @@ namespace srt {
 		Vec3 const& direction)
 	{
 		fFaces[i].setPlane(origin, direction);
-	}
-
-	void ConvexPolyhedron::process(Ray const& ray, ProcessHandler& handler) const
-	{
-		Real s;
-		bool in2out;
-		int i = hitFace(ray, s, in2out);
-		if (i >= 0) {
-			report(ray, i, s, handler);
-		}
 	}
 
 	std::shared_ptr<ConvexPolyhedron> convexPolyhedron(
@@ -186,10 +163,11 @@ namespace srt {
 		}
 	}
 
-	int Polyhedron::hitFace(Ray const& ray, Real& s, bool& in2out) const
+	bool Polyhedron::intersect(Ray const& ray, Real tMax, Hit& hit) const
 	{
 		int best = -1;
-		Real sbest = kInfity;
+		Real sbest = tMax;
+		bool in2out = false;
 		for (size_t i = 0; i < fFaces.size(); ++i) {
 			PolyhedronFace const& f = fFaces[i];
 			Real a = dot(f.N, ray.fD);
@@ -224,25 +202,13 @@ namespace srt {
 				in2out = a > 0;
 			}
 		}
-		s = sbest;
-		return best;
-	}
-
-	void Polyhedron::distance(Ray const& ray, Real& s, bool& in2out) const
-	{
-		if (hitFace(ray, s, in2out) < 0) {
-			s = kInfity;
+		if (best < 0) {
+			return false;
 		}
-	}
-
-	void Polyhedron::process(Ray const& ray, ProcessHandler& handler) const
-	{
-		Real s;
-		bool in2out;
-		int i = hitFace(ray, s, in2out);
-		if (i >= 0) {
-			report(ray, i, s, handler);
-		}
+		hit.t = sbest;
+		hit.in2out = in2out;
+		hit.part = best;
+		return true;
 	}
 
 	std::shared_ptr<Polyhedron> polyhedron(std::vector<Vec3> vertices,

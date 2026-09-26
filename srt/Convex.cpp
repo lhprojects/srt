@@ -25,15 +25,13 @@ namespace srt {
 
 	Surface *minsSurface(Ray const &ray,
 		std::vector<std::shared_ptr<Surface>> const& fSurfaces) {
-		DistanceHandler tdh;
 		Real smin = kInfity;
 		Surface* surfmin = nullptr;
 		for (Surface* surf : unwrap(fSurfaces)) {
-			tdh.fDistance = kInfity;
-			surf->process(ray, tdh);
-			if (tdh.fDistance < smin) {
+			Hit h;
+			if (surf->intersect(ray, smin, h)) {
 
-				Vec3 p = ray.fO + tdh.fDistance * ray.fD;
+				Vec3 p = ray.fO + h.t * ray.fD;
 				bool innner = true;
 				for (Surface* surf2 : unwrap(fSurfaces)) {
 					if (surf2 != surf) {
@@ -44,7 +42,7 @@ namespace srt {
 					}
 				}
 				if (innner) {
-					smin = tdh.fDistance;
+					smin = h.t;
 					surfmin = surf;
 				}
 			}
@@ -52,32 +50,30 @@ namespace srt {
 		return surfmin;
 	}
 
-	void Convex::process(Ray const& ray,
-		ProcessHandler& handler) const
+	bool Convex::intersect(Ray const& ray, Real tMax, Hit& hit) const
 	{
+		Surface const* face;
+		bool done = false;
 		if (fAllPlanes) {
-			bool done;
-			PlaneSurface const* face = minsPlane(ray, fPlanes, done);
-			if (done) {
-				if (face)
-					face->PlaneSurface::process(ray, handler);
-				return;
-			}
+			face = minsPlane(ray, fPlanes, done);
 		}
-		Surface* surfmin = minsSurface(ray, fSurfaces);
-		if (surfmin)
-			surfmin->process(ray, handler);
+		if (!done) {
+			face = minsSurface(ray, fSurfaces);
+		}
+		if (!face || !face->intersect(ray, tMax, hit)) {
+			return false;
+		}
+		if (!hit.sub) {
+			hit.sub = face;
+		}
+		return true;
 	}
 
-	void Convex::distanceGeneral(Ray const& ray, Real& s, bool& in2out) const
+	void Convex::shade(Ray const& ray, Hit const& hit, TracingHandler& out) const
 	{
-		s = kInfity;
-		Surface* surfmin = minsSurface(ray, fSurfaces);
-		if (surfmin) {
-			DistanceHandler handler;
-			surfmin->process(ray, handler);
-			s = handler.fDistance;
-			in2out = handler.fIn2out;
+		// only reached if the hit was not passed to its face (Hit::sub)
+		if (hit.sub) {
+			hit.sub->shade(ray, hit, out);
 		}
 	}
 

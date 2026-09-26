@@ -9,41 +9,23 @@
 
 namespace srt {
 	struct Device;
-	 enum class HandlerType {
-		Distance,
-		Tracing,
+
+	// The nearest hit of a ray on a device, as Device::intersect finds it:
+	// only what is needed to pick the nearest device and to shade it later.
+	struct Hit {
+		// distance along the ray
+		Real t = kInfity;
+		// whether the ray comes from the inner side
+		bool in2out = false;
+		// which part of the device, for its shade(): a face, ...
+		int part = -1;
+		// the device that shades the hit, if not the one intersected (e.g. the
+		// face of a Convex); set by the innermost device that knows it
+		Device const* sub = nullptr;
 	};
 
-	 struct ProcessHandler {
-		HandlerType fType;
-
-		constexpr bool isDistancing() const {
-			return fType == HandlerType::Distance;
-		}
-	};
-
-	 struct DistanceHandler : ProcessHandler {
-
-		DistanceHandler()
-		{
-			fType = HandlerType::Distance;
-		}
-		Real fDistance = kInfity;
-		bool fIn2out = false;
-
-		void distance(Real s, bool in2out)
-		{
-			fDistance = s;
-			fIn2out = in2out;
-		}
-	};
-
-	 struct TracingHandler : ProcessHandler {
-
-		TracingHandler()
-		{
-			fType = HandlerType::Tracing;
-		}
+	// Everything about the hit a ray is traced on: filled by Device::shade.
+	struct TracingHandler {
 
 		bool pictrue = false;
 		bool record = false;
@@ -90,19 +72,24 @@ namespace srt {
 			set(pars::uncheck, args...);
 		}
 
-		virtual void process(Ray const& in, ProcessHandler& handler) const = 0;
+		// the nearest hit of ray ahead of it (beyond gSmin) and nearer than
+		// tMax: fills hit and returns true, or returns false
+		virtual bool intersect(Ray const& ray, Real tMax, Hit& hit) const = 0;
+		// the full hit (point, normal, material) for a hit that intersect()
+		// found on this device
+		virtual void shade(Ray const& ray, Hit const& hit, TracingHandler& out) const = 0;
 
 		bool dependsOnWavelength() const
 		{
 			return fWavelength == WavelengthUse::Tracing;
 		}
 
-		// what process() does with the ray's wavelength
+		// what shade() does with the ray's wavelength
 		enum class WavelengthUse {
 			// nothing
 			None,
-			// reads it with a TracingHandler: such a device only gets rays with
-			// fLambda != 0 (see Ray::fLambda); its distance pass must not
+			// reads it in shade(): such a device only gets rays with
+			// fLambda != 0 (see Ray::fLambda); its intersect() must not
 			// depend on the wavelength
 			Tracing,
 		};

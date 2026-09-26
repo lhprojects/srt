@@ -42,22 +42,8 @@ namespace srt {
 			return inner(p);
 		}
 
-		void process(Ray const& in, ProcessHandler& handler) const override;
-
-		// the nearest hit ahead of r within the bound: its distance s, point
-		// and normal
-		inline bool intersect(Ray const& r, Real& s, Vec3& inter, Vec3& N) const;
-
-		// the distance pass of process(): s = kInfity on a miss
-		void distance(Ray const& r, Real& s, bool& in2out) const
-		{
-			Vec3 inter, N;
-			if (intersect(r, s, inter, N)) {
-				in2out = dot(N, r.fD) > 0;
-			} else {
-				s = kInfity;
-			}
-		}
+		inline bool intersect(Ray const& ray, Real tMax, Hit& hit) const override;
+		inline void shade(Ray const& ray, Hit const& hit, TracingHandler& out) const override;
 	};
 
 	std::shared_ptr<QuadricSurface> quadricSurface(pars::argument auto const &... args) {
@@ -65,8 +51,8 @@ namespace srt {
 		return std::make_shared<QuadricSurface>(args...);
 	}
 
-	inline bool QuadricSurface::intersect(Ray const& r, Real& s,
-		Vec3& inter, Vec3& N) const
+	inline bool QuadricSurface::intersect(Ray const& r, Real tMax,
+		Hit& hit) const
 	{
 		// <Qx,x> + <P,x> + R = 0
 		// <Q(O+Ds>,O+Ds> + <P,O> + <P,D>s + R = 0
@@ -124,36 +110,30 @@ namespace srt {
 			return false;
 		}
 
-		if (s1 <= gSmin/* && s2 > 0*/) {
-			inter = r.fO + r.fD * s2;
-			if (!inBound(getBound(), inter)) {
+		// the first hit ahead of the ray within the bound
+		Real ss[2] = { s1, s2 };
+		for (int k = s1 <= gSmin ? 1 : 0; k < 2; ++k) {
+			Real s = ss[k];
+			if (s >= tMax) {
 				return false;
 			}
-			s = s2;
-		}
-		else { /*s1 > 0*/
-			// two intersections
-
-			inter = O + D * s1;
-
-			// try the first one
+			Vec3 inter = O + D * s;
 			if (inBound(getBound(), inter)) {
-				s = s1;
-			}
-			else {
-				// try the second one
-				inter = O + D * s2;
-				if (inBound(getBound(), inter)) {
-					s = s2;
-				}
-				else {
-					return false;
-				}
+				hit.t = s;
+				// the gradient points to the outer side
+				hit.in2out = dot(fP + 2. * dot(fQ, inter), D) > 0;
+				return true;
 			}
 		}
+		return false;
+	}
 
-		N = normalize(fP + 2. * dot(fQ, inter));
-		return true;
+	inline void QuadricSurface::shade(Ray const& r, Hit const& hit,
+		TracingHandler& out) const
+	{
+		Vec3 inter = r.fO + r.fD * hit.t;
+		Vec3 N = normalize(fP + 2. * dot(fQ, inter));
+		out.hitSurface(inter, N, hit.in2out, this, this);
 	}
 
 	
@@ -222,7 +202,8 @@ namespace srt {
 			return inner(p);
 		}
 
-		void process(Ray const& in, ProcessHandler& handler) const override;
+		bool intersect(Ray const& ray, Real tMax, Hit& hit) const override;
+		void shade(Ray const& ray, Hit const& hit, TracingHandler& out) const override;
 	};
 
 
@@ -253,11 +234,7 @@ namespace srt {
 
 		bool isInner(Vec3 const& p) const override;
 		void setGridTexture(Real w);
-		void process(Ray const& r, ProcessHandler& handler) const override;
-
-		// the hit ahead of r within the bound: its distance s and point;
-		// in2out: whether r comes from the inner side
-		bool intersect(Ray const& r, Real& s, bool& in2out, Vec3& inter) const
+		bool intersect(Ray const& r, Real tMax, Hit& hit) const override
 		{
 			// <P,O+Ds> + R = 0
 			Real b = dot(fP, r.fO) + fR;
@@ -266,27 +243,23 @@ namespace srt {
 			if (a * b > 0) {
 				return false;
 			}
-			Real s1 = -b / a;
-			if (s1 <= gSmin) {
+			Real s = -b / a;
+			if (!(s > gSmin)) {
 				// surface is behind ray
 				return false;
 			}
-			inter = r.fO + r.fD * s1;
-			if (!inBound(getBound(), inter)) {
+			if (s >= tMax || !inBound(getBound(), r.fO + r.fD * s)) {
 				return false;
 			}
-			s = s1;
-			in2out = b < 0;
+			hit.t = s;
+			hit.in2out = b < 0;
 			return true;
 		}
 
-		// the distance pass of process(): s = kInfity on a miss
-		void distance(Ray const& r, Real& s, bool& in2out) const
+		void shade(Ray const& r, Hit const& hit, TracingHandler& out) const override
 		{
-			Vec3 inter;
-			if (!intersect(r, s, in2out, inter)) {
-				s = kInfity;
-			}
+			out.hitSurface(r.fO + r.fD * hit.t, normalize(fP), hit.in2out,
+				this, this);
 		}
 	};
 
@@ -296,28 +269,12 @@ namespace srt {
 		return std::make_shared<PlaneSurface>(args...);
 	}
 
-	inline void PlaneSurface::process(Ray const& r, ProcessHandler& handler) const
-	{
-		Real s;
-		bool in2out;
-		Vec3 inter;
-		if (!intersect(r, s, in2out, inter)) {
-			return;
-		}
-		if (handler.fType == HandlerType::Distance) {
-			static_cast<DistanceHandler&>(handler).distance(s, in2out);
-		} else if (handler.fType == HandlerType::Tracing) {
-			Vec3 N = normalize(fP);
-			static_cast<TracingHandler&>(handler).hitSurface(inter,
-				N, in2out, this, this);
-		}
-	}
-
 	struct ShiftSurface : Surface
 	{
 
 		ShiftSurface(std::shared_ptr<Surface> sur, Vec3 s);
-		void process(Ray const& r, ProcessHandler& handler) const override;
+		bool intersect(Ray const& ray, Real tMax, Hit& hit) const override;
+		void shade(Ray const& ray, Hit const& hit, TracingHandler& out) const override;
 		bool isInner(Vec3 const& p) const override;
 		void shift(Vec3 const &p);
 	private:

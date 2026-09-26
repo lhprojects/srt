@@ -46,10 +46,14 @@ namespace srt {
 			}
 		}
 
-	protected:
-		// hit on face i at distance s: fills handler as a surface would
-		void report(Ray const& ray, int i, Real s, ProcessHandler& handler) const;
+		// Hit::part is the face
+		void shade(Ray const& ray, Hit const& hit, TracingHandler& out) const override
+		{
+			PolyhedronFace const& f = fFaces[hit.part];
+			out.hitSurface(ray.fO + ray.fD * hit.t, f.N, hit.in2out, &f, this);
+		}
 
+	protected:
 		std::vector<PolyhedronFace> fFaces;
 	};
 
@@ -65,9 +69,7 @@ namespace srt {
 		// moves face i onto another plane
 		void setFace(size_t i, Vec3 const& origin, Vec3 const& direction);
 
-		void process(Ray const& ray, ProcessHandler& handler) const override;
-		// the distance pass of process(): s = kInfity on a miss
-		void distance(Ray const& ray, Real& s, bool& in2out) const;
+		inline bool intersect(Ray const& ray, Real tMax, Hit& hit) const override;
 
 	private:
 		// the face where the ray enters or leaves the body ahead of it, -1 if
@@ -97,14 +99,11 @@ namespace srt {
 		void setVertex(size_t i, Vec3 const& p);
 		Vec3 const& vertex(size_t i) const { return fVertices[i]; }
 
-		void process(Ray const& ray, ProcessHandler& handler) const override;
-		// the distance pass of process(): s = kInfity on a miss
-		void distance(Ray const& ray, Real& s, bool& in2out) const;
+		bool intersect(Ray const& ray, Real tMax, Hit& hit) const override;
 
 	private:
 		// the planes and outlines of the faces, from the vertices
 		void update();
-		int hitFace(Ray const& ray, Real& s, bool& in2out) const;
 
 		std::vector<Vec3> fVertices;
 		std::vector<std::vector<int>> fIndices;
@@ -160,12 +159,19 @@ namespace srt {
 		return -1;
 	}
 
-	inline void ConvexPolyhedron::distance(Ray const& ray, Real& s,
-		bool& in2out) const
+	inline bool ConvexPolyhedron::intersect(Ray const& ray, Real tMax,
+		Hit& hit) const
 	{
-		if (hitFace(ray, s, in2out) < 0) {
-			s = kInfity;
+		Real s;
+		bool in2out;
+		int i = hitFace(ray, s, in2out);
+		if (i < 0 || s >= tMax) {
+			return false;
 		}
+		hit.t = s;
+		hit.in2out = in2out;
+		hit.part = i;
+		return true;
 	}
 
 }

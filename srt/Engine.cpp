@@ -61,14 +61,15 @@ namespace srt {
 		Ray ray;
 	};
 
-	static Device* minSDevice(std::vector<Device*>& devs,
-		Ray const& ray,
-		Real& ref_smin) {
-		Real smin = std::numeric_limits<Real>::infinity();
-		Device* smin_dev = nullptr;
-		bool smin_in2out = false;
-
-		DistanceHandler handler;
+	// The nearest hit of ray on the devices, in best; its device, or nullptr.
+	// Of two hits less than gSmin apart, one where the ray enters a device
+	// beats one where it leaves another, as for a ray crossing two touching
+	// surfaces. Each device only looks for hits nearer than the best so far.
+	static Device* nearestHit(std::vector<Device*>& devs, Ray const& ray,
+		Hit& best)
+	{
+		best = Hit{};
+		Device* bestDev = nullptr;
 
 		// read once: the calls below could, as far as the compiler knows,
 		// change the vector
@@ -76,54 +77,56 @@ namespace srt {
 		size_t const ndev = devs.size();
 		for (size_t dev_idx = 0; dev_idx < ndev; ++dev_idx) {
 			Device* dev = devp[dev_idx];
-
+			// a hit up to gSmin beyond the best can still win (see above)
+			Real tMax = best.t + gSmin;
+			Hit h;
+			bool hit;
 			switch (dev->fKind) {
 			case Device::Kind::Plane:
-				static_cast<PlaneSurface const*>(dev)->distance(ray,
-					handler.fDistance, handler.fIn2out);
+				hit = static_cast<PlaneSurface const*>(dev)->PlaneSurface::intersect(ray, tMax, h);
 				break;
 			case Device::Kind::Quadric:
-				static_cast<QuadricSurface const*>(dev)->distance(ray,
-					handler.fDistance, handler.fIn2out);
+				hit = static_cast<QuadricSurface const*>(dev)->QuadricSurface::intersect(ray, tMax, h);
 				break;
 			case Device::Kind::Convex:
-				static_cast<Convex const*>(dev)->distance(ray,
-					handler.fDistance, handler.fIn2out);
+				hit = static_cast<Convex const*>(dev)->Convex::intersect(ray, tMax, h);
 				break;
 			case Device::Kind::ConvexPolyhedron:
-				static_cast<ConvexPolyhedron const*>(dev)->distance(ray,
-					handler.fDistance, handler.fIn2out);
+				hit = static_cast<ConvexPolyhedron const*>(dev)->ConvexPolyhedron::intersect(ray, tMax, h);
 				break;
 			case Device::Kind::Polyhedron:
-				static_cast<Polyhedron const*>(dev)->distance(ray,
-					handler.fDistance, handler.fIn2out);
+				hit = static_cast<Polyhedron const*>(dev)->Polyhedron::intersect(ray, tMax, h);
 				break;
 			default:
-				handler.fDistance = kInfity;
-				dev->process(ray, handler);
+				hit = dev->intersect(ray, tMax, h);
 			}
-			Real s = handler.fDistance;
-
-			if (!std::isinf(s)) {
-				if (s < smin - gSmin) {
-					smin = s;
-					smin_dev = dev;
-					smin_in2out = handler.fIn2out;
-				} else if (s < smin + gSmin
-					&& !handler.fIn2out
-					&& smin_in2out) {
-					smin = s;
-					smin_dev = dev;
-					smin_in2out = handler.fIn2out;
-				} else if (s < smin) {
-					smin = s;
-					smin_dev = dev;
-					smin_in2out = handler.fIn2out;
-				}
+			if (hit && (h.t < best.t || (!h.in2out && best.in2out))) {
+				best = h;
+				bestDev = dev;
 			}
 		}
-		ref_smin = smin;
-		return smin_dev;
+		return bestDev;
+	}
+
+	// the full hit, for a hit that nearestHit found on dev
+	static void shadeHit(Device const* dev, Ray const& ray, Hit const& hit,
+		TracingHandler& out)
+	{
+		Device const* d = hit.sub ? hit.sub : dev;
+		switch (d->fKind) {
+		case Device::Kind::Plane:
+			static_cast<PlaneSurface const*>(d)->PlaneSurface::shade(ray, hit, out);
+			break;
+		case Device::Kind::Quadric:
+			static_cast<QuadricSurface const*>(d)->QuadricSurface::shade(ray, hit, out);
+			break;
+		case Device::Kind::ConvexPolyhedron:
+		case Device::Kind::Polyhedron:
+			static_cast<PolyhedronBase const*>(d)->PolyhedronBase::shade(ray, hit, out);
+			break;
+		default:
+			d->shade(ray, hit, out);
+		}
 	}
 
 	// for a ray carrying a spectrum (fLambda == 0) that reaches something which
@@ -137,38 +140,21 @@ namespace srt {
 		for (auto& c : ray.fC) c = 0;
 	}
 
+	// traces ray to its nearest hit: fills handler, or returns false
 	static bool emitRay(std::vector<Device*>& devs,
 		Ray& ray,
-		ProcessHandler& handler) {
-		Real smin = kInfity;
-		Device* smin_dev = minSDevice(devs, ray, smin);
-		if (smin_dev) {
-			if (ray.fLambda == 0 && smin_dev->dependsOnWavelength()) {
-				drawWavelength(ray);
-			}
-			switch (smin_dev->fKind) {
-			case Device::Kind::Plane:
-				static_cast<PlaneSurface const*>(smin_dev)->PlaneSurface::process(ray, handler);
-				break;
-			case Device::Kind::Quadric:
-				static_cast<QuadricSurface const*>(smin_dev)->QuadricSurface::process(ray, handler);
-				break;
-			case Device::Kind::Convex:
-				static_cast<Convex const*>(smin_dev)->Convex::process(ray, handler);
-				break;
-			case Device::Kind::ConvexPolyhedron:
-				static_cast<ConvexPolyhedron const*>(smin_dev)->ConvexPolyhedron::process(ray, handler);
-				break;
-			case Device::Kind::Polyhedron:
-				static_cast<Polyhedron const*>(smin_dev)->Polyhedron::process(ray, handler);
-				break;
-			default:
-				smin_dev->process(ray, handler);
-			}
-			return true;
-		} else {
+		TracingHandler& handler) {
+		Hit hit;
+		Device* dev = nearestHit(devs, ray, hit);
+		if (!dev) {
 			return false;
 		}
+		if (ray.fLambda == 0 && (dev->dependsOnWavelength()
+			|| (hit.sub && hit.sub->dependsOnWavelength()))) {
+			drawWavelength(ray);
+		}
+		shadeHit(dev, ray, hit, handler);
+		return true;
 	}
 
 	static bool checkRefractDirection(Vec3 N, Vec3 const& rayD,
@@ -843,16 +829,16 @@ namespace srt {
 		for (;;) {
 
 
-			Real smin;
-			Device* dev = minSDevice(fDevices, testRay, smin);
+			Hit hit;
+			Device* dev = nearestHit(fDevices, testRay, hit);
 			if (!dev) {
 				break;
 			}
-			if (smin >= sqrt(norm2(inter - light))) {
+			if (hit.t >= sqrt(norm2(inter - light))) {
 				break;
 			}
 
-			dev->process(testRay, ph);
+			shadeHit(dev, testRay, hit, ph);
 
 			if (ph.hit) {
 				Color surfaceColor = !ph.inner ?

@@ -50,30 +50,34 @@ void blueSky(int q)
             trans_property.fInnerReflectType = ReflectType::Mirror;
         }
 
-        void process(Ray const& in, ProcessHandler& handler) const {
+        bool intersect(Ray const& in, Real tMax, Hit& hit) const override {
+            if (atmosphereTop->isInner(in.fO)) {
+                // a step through the air
+                if (step >= tMax) {
+                    return false;
+                }
+                hit.t = step;
+                hit.in2out = true;
+                return true;
+            }
+            if (!atmosphereTop->intersect(in, tMax, hit)) {
+                return false;
+            }
+            // the top of the atmosphere shades its own hit
+            hit.sub = atmosphereTop.get();
+            return true;
+        }
 
-                if (handler.fType == HandlerType::Distance) {
-                    if (atmosphereTop->isInner(in.fO)) {
-                        static_cast<DistanceHandler&>(handler).distance(step, true);
-                    } else {
-                        atmosphereTop->process(in, handler);
-                    }
-                } else if (handler.fType == HandlerType::Tracing) {
-                    if (atmosphereTop->isInner(in.fO)) {
-                        Real len = Length / Sqr(Sqr(500 / in.fLambda));
-                        if (uniform(0, 1) < step / len) {
-                            static_cast<TracingHandler&>(handler).hitSurface(
-                                in.fO + in.fD * step, in.fD,
-                                true, &scattering_property, this);
-                        } else {
-                            static_cast<TracingHandler&>(handler).hitSurface(
-                                in.fO + in.fD * step, in.fD,
-                                true, &trans_property, this);
-                        }
-                    } else {
-                        atmosphereTop->process(in, handler);
-                    }
-                }                       
+        // only for a step through the air (see intersect)
+        void shade(Ray const& in, Hit const& hit, TracingHandler& out) const override {
+            Real len = Length / Sqr(Sqr(500 / in.fLambda));
+            if (uniform(0, 1) < step / len) {
+                out.hitSurface(in.fO + in.fD * step, in.fD,
+                    true, &scattering_property, this);
+            } else {
+                out.hitSurface(in.fO + in.fD * step, in.fD,
+                    true, &trans_property, this);
+            }
         }
 
     };

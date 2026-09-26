@@ -113,8 +113,9 @@ namespace srt {
 		void raster(std::ostream& os, ImageFileFormat iff, ScreenOpts const& opts);
 		void raster(Bitmap&, ScreenOpts const& opts);
 
+		// keeps the ray, if recording, as it crosses the screen at the hit
 		void record(
-			Ray const& in, ProcessHandler& handler) const;
+			Ray const& in, TracingHandler& hit) const;
 
 	private:
 		bool fRecordIn2Out = true;
@@ -125,7 +126,7 @@ namespace srt {
 
 	struct PlaneScreen : PlaneSurface, Screen
 	{
-		// process() also records the ray: keep it off the fast path of the
+		// shade() also records the ray: keep it off the fast path of the
 		// nearest-hit search (Device::fKind)
 		PlaneScreen() { fKind = Kind::Other; }
 
@@ -167,7 +168,7 @@ namespace srt {
 		}
 
 
-		void process(Ray const& in, ProcessHandler& handler) const override;
+		void shade(Ray const& in, Hit const& hit, TracingHandler& out) const override;
 	};
 
 	std::shared_ptr<PlaneScreen> planeScreen(pars::argument auto const &... args)
@@ -191,7 +192,7 @@ namespace srt {
 			set(args...);
 		}
 
-		void process(Ray const& in, ProcessHandler& handler) const override;
+		void shade(Ray const& in, Hit const& hit, TracingHandler& out) const override;
 	};
 
 

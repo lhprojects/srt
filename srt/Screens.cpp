@@ -46,30 +46,20 @@ namespace srt {
 
 
 	void Screen::record(
-		Ray const& r, ProcessHandler& handler) const
+		Ray const& r, TracingHandler& th) const
 	{
-
-		if (handler.fType == HandlerType::Tracing) {
-			TracingHandler& th = static_cast<TracingHandler&>(handler);
-
-			if (th.record)
-			{
-				if (fRecordOut2In) {
-					if (dot(r.fD, th.N) < 0) { // out 2 in
-
-						Vec3 inter = static_cast<TracingHandler&>(handler).inter;
-						fRays.push_back(Ray(inter, r.fD, r.fAmp, r));
-					}
-				}
-				if (fRecordIn2Out) {
-					if (dot(r.fD, th.N) > 0) { // in 2 out
-
-						Vec3 inter = static_cast<TracingHandler&>(handler).inter;
-						fRays.push_back(Ray(inter, r.fD, r.fAmp, r));
-					}
+		if (th.record)
+		{
+			if (fRecordOut2In) {
+				if (dot(r.fD, th.N) < 0) { // out 2 in
+					fRays.push_back(Ray(th.inter, r.fD, r.fAmp, r));
 				}
 			}
-
+			if (fRecordIn2Out) {
+				if (dot(r.fD, th.N) > 0) { // in 2 out
+					fRays.push_back(Ray(th.inter, r.fD, r.fAmp, r));
+				}
+			}
 		}
 	}
 
@@ -141,22 +131,24 @@ namespace srt {
 
 	QuadricScreen::QuadricScreen() : QuadricSurface()
 	{
-		// process() also records the ray: keep it off the fast path of the
+		// shade() also records the ray: keep it off the fast path of the
 		// nearest-hit search (Device::fKind)
 		fKind = Kind::Other;
 	}
 
-	void QuadricScreen::process(Ray const& in, ProcessHandler& handler) const
+	void QuadricScreen::shade(Ray const& in, Hit const& hit,
+		TracingHandler& out) const
 	{
-		QuadricSurface::process(in, handler);
-		record(in, handler);
+		QuadricSurface::shade(in, hit, out);
+		record(in, out);
 	}
 
 
-	void PlaneScreen::process(Ray const& in, ProcessHandler& handler) const
+	void PlaneScreen::shade(Ray const& in, Hit const& hit,
+		TracingHandler& out) const
 	{
-		PlaneSurface::process(in, handler);
-		record(in, handler);
+		PlaneSurface::shade(in, hit, out);
+		record(in, out);
 	}
 
 }

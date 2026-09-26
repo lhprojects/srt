@@ -259,11 +259,12 @@ namespace srt {
 		return kInfity;
 	}
 
-	void Tracking::process(Ray const& ray, ProcessHandler& handler) const
+	// the distance to the nearest path; N as before: the normal found last
+	Real Tracking::nearest(Ray const& ray, Vec3& N) const
 	{
 
 		{
-			Vec3 N = Vec3{ 0,0, 1 };
+			N = Vec3{ 0,0, 1 };
 			Real smin = kInfity;
 			if (0) {
 				paths[0]->for_each([=](Node* o, Node* node) {
@@ -292,18 +293,26 @@ namespace srt {
 					});
 			}
 
-			if (!std::isinf(smin)) {
-				if (handler.fType == HandlerType::Distance) {
-					static_cast<DistanceHandler&>(handler).distance(smin, false);
-				}
-				else {
-					Vec3 inter = ray.fO + ray.fD * smin;
-					bool inner = false;
-					static_cast<TracingHandler&>(handler).hitSurface(inter, N, inner,
-						this, this);
-				}
-			}
-
+			return smin;
 		}
+	}
+
+	bool Tracking::intersect(Ray const& ray, Real tMax, Hit& hit) const
+	{
+		Vec3 N;
+		Real s = nearest(ray, N);
+		if (std::isinf(s) || s >= tMax) {
+			return false;
+		}
+		hit.t = s;
+		hit.in2out = false;
+		return true;
+	}
+
+	void Tracking::shade(Ray const& ray, Hit const& hit, TracingHandler& out) const
+	{
+		Vec3 N;
+		nearest(ray, N);
+		out.hitSurface(ray.fO + ray.fD * hit.t, N, false, this, this);
 	}
 }
